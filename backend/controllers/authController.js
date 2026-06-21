@@ -35,7 +35,7 @@ export const registerUser = async (req, res, next) => {
     await session.commitTransaction();
     session.endSession();
 
-    generateTokenAndSetCookie(res, newUser._id);
+    const token = generateTokenAndSetCookie(res, newUser._id);
 
     return res.status(201).json({
       _id: newUser._id,

@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/user.js'; // तुमच्या 'user.js' फाईलचा अचूक पाथ
+import User from '../models/User.js';
 
 // 🔑 १. युझर लॉग-इन आहे की नाही हे तपासण्यासाठी (Authentication)
 export const protect = async (req, res, next) => {

@@ -1,6 +1,19 @@
 // backend/middlewares/errorMiddleware.js
 
 const globalErrorHandler = (err, req, res, next) => {
+  if (err.name === 'CastError') {
+    err.statusCode = 400;
+    err.status = 'fail';
+    err.isOperational = true;
+    err.message = 'Invalid request data.';
+  }
+
+  if (err.name === 'MulterError') {
+    err.statusCode = 400;
+    err.status = 'fail';
+    err.isOperational = true;
+  }
+
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 

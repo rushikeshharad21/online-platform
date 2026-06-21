@@ -121,11 +121,13 @@ const InstructorDashboard = () => {
 
                   <Stack
                     direction="row"
-                    flexWrap="wrap"
-                    rowGap={1}
-                    justifyContent="space-between"
-                    alignItems="center"
-                    sx={{ mb: 2 }}
+                    sx={{
+                      mb: 2,
+                      flexWrap: 'wrap',
+                      rowGap: 1,
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
                   >
                     <Box sx={{
                       bgcolor: '#fff9c4',

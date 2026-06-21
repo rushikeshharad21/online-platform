@@ -15,14 +15,12 @@ import Register from './pages/common/Register';
 // Core Features Implemented Pages
 import CreateCourse from "./pages/CreateCourse"; 
 import InstructorDashboard from "./pages/InstructorDashboard"; 
+import EditCourse from "./pages/EditCourse";
+import StudentDashboard from "./pages/StudentDashboard";
+import CourseViewer from "./pages/CourseViewer";
 
-// Student Pages Folder (Placeholders - we will write these out later)
-const StudentDashboard = () => <div style={{ padding: '24px' }}><h2>🎓 Student Dashboard Workspace</h2><p>Welcome to your learning track panel.</p></div>;
-const CourseViewer = () => <div style={{ padding: '24px' }}><h2>📖 Course Video Viewer Engine</h2></div>;
+// Remaining Placeholders
 const Checkout = () => <div style={{ padding: '24px' }}><h2>💳 Secure Checkout Window</h2></div>;
-
-// Instructor Pages Folder (Placeholders)
-const EditCourse = () => <div style={{ padding: '24px' }}><h2>✏️ Course Material Editor</h2></div>;
 
 // Wildcard Error Handling Viewport
 const NotFound = () => <div style={{ padding: '40px', textAlign: 'center' }}><h2>404 - Page Not Found</h2></div>;
