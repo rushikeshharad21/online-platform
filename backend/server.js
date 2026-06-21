@@ -2,10 +2,16 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import courseRoutes from './routes/courseRoutes.js'; 
+import studyMaterialRoutes from './routes/studyMaterialRoutes.js';
 import globalErrorHandler from './middlewares/errorMiddleware.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 const app = express();
@@ -28,6 +34,10 @@ app.use(cookieParser());
 // ॲप राउट्स (App Routes)
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes); 
+app.use('/api/study-materials', studyMaterialRoutes);
+
+// स्थानिक फाईल्स दाखवण्यासाठी static folder
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
 
 // ग्लोबल एरर हँडलर पाईपलाईन
 app.use(globalErrorHandler);
