@@ -3,169 +3,120 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser, resetState } from '../../features/auth/authSlice';
 import { 
-  Container, 
-  Box, 
-  Typography, 
-  TextField, 
-  Button, 
-  Card, 
-  CardContent, 
-  Avatar, 
-  Alert,
-  CircularProgress
+  Container, Box, Typography, TextField, Button, Card, 
+  CardContent, Alert, CircularProgress 
 } from '@mui/material';
 import { LockOutlined } from '@mui/icons-material';
 
 function Login() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
-
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const { email, password } = formData;
-
   const navigate = useNavigate();
   const dispatch = useDispatch();
   
-  // Access global security states inside your Redux slices blueprint
   const { user, isLoading, isError, message } = useSelector((state) => state.auth || {});
 
   useEffect(() => {
     if (user) {
-      // Fluid route authorization handshakes matching your directory access nodes
-      if (user.role === 'instructor') {
-        navigate('/instructor/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
+      navigate(user.role === 'instructor' ? '/instructor/dashboard' : '/dashboard');
     }
-
-    // Clean up states when navigating away from the authorization node
-    return () => {
-      if (dispatch && resetState) {
-        dispatch(resetState());
-      }
-    };
+    return () => dispatch(resetState());
   }, [user, navigate, dispatch]);
 
-  const onChange = (e) => {
-    setFormData({ 
-      ...formData, 
-      [e.target.name]: e.target.value 
-    });
-  };
+  const onChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const onSubmit = (e) => {
     e.preventDefault();
-    if (email && password) {
-      dispatch(loginUser({ email, password }));
-    }
+    if (email && password) dispatch(loginUser({ email, password }));
+  };
+
+  const glassStyle = {
+    background: 'rgba(255, 255, 255, 0.05)',
+    backdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: 4,
+    color: '#fff',
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box 
-        sx={{ 
-          marginTop: { xs: 4, sm: 8 }, // Fluid margins: tighter on mobile, spacious on screens
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center' 
-        }}
-      >
-        <Card 
-          elevation={3} 
-          sx={{ 
-            width: '100%', 
-            borderRadius: 3,
-            p: { xs: 1, sm: 3 } // Dynamic interior padding based on device scale
-          }}
-        >
-          <CardContent>
-            {/* Header Icon & Branding Typography */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-              <Avatar sx={{ m: 1, bgcolor: 'primary.main', width: 56, height: 56 }}>
-                <LockOutlined fontSize="large" />
-              </Avatar>
-              <Typography component="h1" variant="h4" sx={{ fontWeight: 700, mt: 1 }}>
-                Sign In
-              </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5 }}>
-                Access your personalized LMS workspace
-              </Typography>
-            </Box>
+    <Container maxWidth="xs" sx={{ mt: 10 }}>
+      <Card sx={glassStyle} elevation={0}>
+        <CardContent sx={{ p: 4 }}>
+          {/* Replaced Avatar with subtle, high-end iconography */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
+            <LockOutlined sx={{ fontSize: 32, color: '#0d6efd', mb: 1.5 }} />
+            <Typography variant="h5" sx={{ fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
+              Welcome Back
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', mt: 0.5 }}>
+              Sign in to continue to your dashboard
+            </Typography>
+          </Box>
 
-            {/* Error alerts from API Handshakes */}
-            {isError && (
-              <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-                {message || 'Authentication failed. Please verify credentials.'}
-              </Alert>
-            )}
+          {isError && (
+            <Alert severity="error" sx={{ mb: 3, background: 'rgba(211,47,47,0.15)', color: '#ffb3b3', border: '1px solid rgba(211,47,47,0.3)', borderRadius: 2 }}>
+              {message || 'Authentication failed.'}
+            </Alert>
+          )}
 
-            {/* Interactive Forms Processing Block */}
-            <Box component="form" onSubmit={onSubmit} noValidate>
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="email"
-                label="Email Address"
-                name="email"
-                autoComplete="email"
-                autoFocus
-                value={email}
-                onChange={onChange}
-                disabled={isLoading}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                name="password"
-                label="Password"
-                type="password"
-                id="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={onChange}
-                disabled={isLoading}
-                sx={{ mb: 3 }}
-              />
+          <Box component="form" onSubmit={onSubmit} noValidate>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="email"
+              label="Email Address"
+              type="email"
+              value={email}
+              onChange={onChange}
+              disabled={isLoading}
+              sx={inputStyles}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Password"
+              type="password"
+              value={password}
+              onChange={onChange}
+              disabled={isLoading}
+              sx={inputStyles}
+            />
 
-              {/* Action Submit Dispatch Button */}
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                size="large"
-                disabled={isLoading}
-                sx={{ 
-                  py: 1.5, 
-                  borderRadius: 2, 
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  textTransform: 'none'
-                }}
-              >
-                {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              size="large"
+              disabled={isLoading}
+              sx={{ mt: 4, py: 1.5, borderRadius: 2, textTransform: 'none', fontSize: '1rem', fontWeight: 600, background: '#0d6efd', boxShadow: 'none', '&:hover': { background: '#0b5ed7' } }}
+            >
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+            </Button>
+
+            <Box sx={{ textAlign: 'center', mt: 3 }}>
+              <Button onClick={() => navigate('/register')} sx={{ color: 'rgba(255,255,255,0.6)', textTransform: 'none', fontSize: '0.9rem' }}>
+                Don't have an account? <strong style={{ marginLeft: 5, color: '#fff' }}>Sign Up</strong>
               </Button>
-
-              {/* Bottom Navigation Anchors */}
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                <Button 
-                  color="primary" 
-                  sx={{ textTransform: 'none', fontWeight: 500 }} 
-                  onClick={() => navigate('/register')}
-                >
-                  Don't have an account? Sign Up
-                </Button>
-              </Box>
             </Box>
-          </CardContent>
-        </Card>
-      </Box>
+          </Box>
+        </CardContent>
+      </Card>
     </Container>
   );
 }
+
+// Extracted styles for cleaner logic
+const inputStyles = {
+  '& .MuiOutlinedInput-root': {
+    color: '#fff',
+    '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' },
+    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
+    '&.Mui-focused fieldset': { borderColor: '#0d6efd' },
+  },
+  '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.4)' },
+};
 
 export default Login;

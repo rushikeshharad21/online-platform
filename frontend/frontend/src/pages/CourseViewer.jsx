@@ -2,20 +2,395 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
-  Container, Typography, Box, Paper, Button, Stack, Card, Divider,
-  CircularProgress, Alert, Accordion, AccordionSummary, AccordionDetails,
-  List, ListItem, ListItemIcon, ListItemText, CardMedia
+  CircularProgress, Alert, Dialog, DialogContent, IconButton
 } from '@mui/material';
 import {
   ExpandMore, PlayArrow, Lock, Download, School,
-  LockOpen, MenuBook, Info
+  LockOpen, MenuBook, Info, Close as CloseIcon
 } from '@mui/icons-material';
+
+const getEmbedUrl = (url) => {
+  if (!url) return '';
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+  return url;
+};
+
+const styles = {
+  page: {
+    minHeight: '100vh',
+    background: 'linear-gradient(135deg, #060d1f 0%, #0a1628 50%, #0d1f3c 100%)',
+    padding: '2rem 1rem 4rem',
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    color: '#e2e8f0',
+  },
+  container: {
+    maxWidth: '1200px',
+    margin: '0 auto',
+  },
+  glass: {
+    background: 'rgba(255,255,255,0.05)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '16px',
+  },
+  glassStrong: {
+    background: 'rgba(255,255,255,0.07)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: '16px',
+  },
+  heroCard: {
+    background: 'rgba(255,255,255,0.05)',
+    backdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '20px',
+    padding: '2.5rem',
+    marginBottom: '2rem',
+  },
+  badge: (color) => ({
+    display: 'inline-block',
+    padding: '4px 12px',
+    borderRadius: '6px',
+    fontSize: '11px',
+    fontWeight: '600',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    background: color === 'blue' ? 'rgba(59,130,246,0.2)' : 'rgba(168,85,247,0.2)',
+    color: color === 'blue' ? '#93c5fd' : '#d8b4fe',
+    border: `1px solid ${color === 'blue' ? 'rgba(59,130,246,0.3)' : 'rgba(168,85,247,0.3)'}`,
+    marginRight: '8px',
+    marginBottom: '16px',
+  }),
+  h1: {
+    fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
+    fontWeight: '700',
+    color: '#f1f5f9',
+    margin: '0 0 0.75rem',
+    lineHeight: 1.2,
+    letterSpacing: '-0.02em',
+  },
+  subtitle: {
+    fontSize: '1.05rem',
+    color: '#94a3b8',
+    margin: '0 0 1.25rem',
+    fontWeight: '400',
+    lineHeight: 1.6,
+  },
+  metaRow: {
+    display: 'flex',
+    gap: '1.5rem',
+    flexWrap: 'wrap',
+    fontSize: '0.875rem',
+    color: '#64748b',
+  },
+  metaItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    color: '#94a3b8',
+  },
+  metaStrong: {
+    color: '#cbd5e1',
+    fontWeight: '500',
+  },
+  thumbnailPlaceholder: {
+    width: '220px',
+    height: '140px',
+    borderRadius: '12px',
+    background: 'rgba(59,130,246,0.1)',
+    border: '1px solid rgba(59,130,246,0.2)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'rgba(59,130,246,0.5)',
+    flexShrink: 0,
+  },
+  thumbnailImg: {
+    width: '220px',
+    height: '140px',
+    borderRadius: '12px',
+    objectFit: 'cover',
+    border: '1px solid rgba(255,255,255,0.1)',
+    flexShrink: 0,
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0, 1fr)',
+    gap: '2rem',
+  },
+  sectionLabel: {
+    fontSize: '0.7rem',
+    fontWeight: '700',
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
+    color: '#3b82f6',
+    marginBottom: '0.75rem',
+    display: 'block',
+  },
+  sectionTitle: {
+    fontSize: '1.35rem',
+    fontWeight: '600',
+    color: '#e2e8f0',
+    margin: '0 0 1rem',
+  },
+  descriptionCard: {
+    background: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '12px',
+    padding: '1.5rem',
+    marginBottom: '2rem',
+    lineHeight: 1.8,
+    color: '#94a3b8',
+    fontSize: '0.95rem',
+    whiteSpace: 'pre-line',
+  },
+  accordion: {
+    border: '1px solid rgba(255,255,255,0.07)',
+    borderRadius: '12px !important',
+    marginBottom: '8px',
+    overflow: 'hidden',
+    background: 'rgba(255,255,255,0.03)',
+  },
+  accordionHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '1rem 1.25rem',
+    cursor: 'pointer',
+    userSelect: 'none',
+    borderBottom: '1px solid rgba(255,255,255,0.07)',
+  },
+  accordionTitle: {
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    color: '#e2e8f0',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  sectionNum: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '24px',
+    height: '24px',
+    borderRadius: '6px',
+    background: 'rgba(59,130,246,0.2)',
+    color: '#60a5fa',
+    fontSize: '11px',
+    fontWeight: '700',
+    flexShrink: 0,
+  },
+  lectureItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '0.75rem 1.25rem',
+    borderTop: '1px solid rgba(255,255,255,0.04)',
+    transition: 'background 0.15s',
+    cursor: 'default',
+  },
+  lectureItemClickable: {
+    cursor: 'pointer',
+  },
+  lectureTitle: {
+    fontSize: '0.875rem',
+    color: '#cbd5e1',
+    flex: 1,
+  },
+  lectureDuration: {
+    fontSize: '0.775rem',
+    color: '#475569',
+    marginTop: '2px',
+  },
+  freeTag: {
+    fontSize: '10px',
+    fontWeight: '700',
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+    padding: '3px 8px',
+    borderRadius: '4px',
+    background: 'rgba(16,185,129,0.15)',
+    color: '#34d399',
+    border: '1px solid rgba(16,185,129,0.25)',
+    flexShrink: 0,
+  },
+  playIcon: {
+    color: '#60a5fa',
+    fontSize: '18px',
+    flexShrink: 0,
+  },
+  lockIcon: {
+    color: '#334155',
+    fontSize: '16px',
+    flexShrink: 0,
+  },
+  enrollCard: {
+    background: 'linear-gradient(145deg, rgba(59,130,246,0.15) 0%, rgba(99,102,241,0.1) 100%)',
+    border: '1px solid rgba(59,130,246,0.3)',
+    borderRadius: '16px',
+    padding: '1.75rem',
+    marginBottom: '1.5rem',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  enrolledCard: {
+    background: 'linear-gradient(145deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.08) 100%)',
+    border: '1px solid rgba(16,185,129,0.3)',
+    borderRadius: '16px',
+    padding: '1.75rem',
+    marginBottom: '1.5rem',
+    textAlign: 'center',
+  },
+  price: {
+    fontSize: '2.2rem',
+    fontWeight: '800',
+    color: '#f1f5f9',
+    textAlign: 'center',
+    marginBottom: '4px',
+    letterSpacing: '-0.03em',
+  },
+  priceNote: {
+    fontSize: '0.8rem',
+    color: '#64748b',
+    textAlign: 'center',
+    marginBottom: '1.25rem',
+  },
+  divider: {
+    border: 'none',
+    borderTop: '1px solid rgba(255,255,255,0.08)',
+    margin: '1rem 0',
+  },
+  enrollBtn: {
+    display: 'block',
+    width: '100%',
+    padding: '0.875rem',
+    background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '0.975rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'opacity 0.2s, transform 0.15s',
+    letterSpacing: '0.01em',
+  },
+  unlockBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '0.5rem 1rem',
+    background: 'rgba(59,130,246,0.15)',
+    color: '#60a5fa',
+    border: '1px solid rgba(59,130,246,0.3)',
+    borderRadius: '8px',
+    fontSize: '0.8rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    marginTop: '0.75rem',
+  },
+  materialsCard: {
+    background: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '16px',
+    padding: '1.5rem',
+  },
+  materialsHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    marginBottom: '1rem',
+  },
+  materialItem: {
+    padding: '0.875rem',
+    background: 'rgba(255,255,255,0.03)',
+    border: '1px solid rgba(255,255,255,0.07)',
+    borderRadius: '10px',
+    marginBottom: '10px',
+  },
+  materialTitle: {
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    color: '#e2e8f0',
+    marginBottom: '4px',
+  },
+  materialDesc: {
+    fontSize: '0.775rem',
+    color: '#64748b',
+    marginBottom: '10px',
+  },
+  materialMeta: {
+    fontSize: '0.75rem',
+    color: '#475569',
+  },
+  materialActions: {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '10px',
+  },
+  viewBtn: {
+    display: 'inline-block',
+    padding: '5px 14px',
+    background: 'transparent',
+    color: '#60a5fa',
+    border: '1px solid rgba(59,130,246,0.4)',
+    borderRadius: '7px',
+    fontSize: '0.775rem',
+    fontWeight: '600',
+    textDecoration: 'none',
+    cursor: 'pointer',
+    transition: 'background 0.15s',
+  },
+  downloadBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '5px',
+    padding: '5px 14px',
+    background: 'rgba(59,130,246,0.15)',
+    color: '#93c5fd',
+    border: '1px solid rgba(59,130,246,0.3)',
+    borderRadius: '7px',
+    fontSize: '0.775rem',
+    fontWeight: '600',
+    textDecoration: 'none',
+    cursor: 'pointer',
+    transition: 'background 0.15s',
+  },
+  lockedBlock: {
+    textAlign: 'center',
+    padding: '1.5rem 1rem',
+    background: 'rgba(255,255,255,0.02)',
+    borderRadius: '10px',
+    border: '1px dashed rgba(255,255,255,0.08)',
+  },
+  emptyBlock: {
+    textAlign: 'center',
+    padding: '1.5rem',
+    color: '#475569',
+    fontSize: '0.875rem',
+  },
+  enrolledBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '10px 20px',
+    background: 'rgba(16,185,129,0.15)',
+    color: '#34d399',
+    border: '1px solid rgba(16,185,129,0.25)',
+    borderRadius: '10px',
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    marginBottom: '12px',
+  },
+};
 
 const CourseViewer = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
 
-  // States
   const [course, setCourse] = useState(null);
   const [materials, setMaterials] = useState([]);
   const [materialsLocked, setMaterialsLocked] = useState(false);
@@ -23,6 +398,8 @@ const CourseViewer = () => {
   const [enrollLoading, setEnrollLoading] = useState(false);
   const [error, setError] = useState('');
   const [enrolled, setEnrolled] = useState(false);
+  const [activeVideo, setActiveVideo] = useState(null);
+  const [expandedSections, setExpandedSections] = useState({ 0: true });
 
   const storedUser = localStorage.getItem('user');
   const user = storedUser ? JSON.parse(storedUser) : null;
@@ -41,9 +418,7 @@ const CourseViewer = () => {
   const fetchCourseDetails = async () => {
     try {
       const response = await axios.get(`http://localhost:5000/api/courses/${courseId}`);
-      if (response.data.success) {
-        setCourse(response.data.course);
-      }
+      if (response.data.success) setCourse(response.data.course);
     } catch (err) {
       setError(err.response?.data?.message || 'Error loading course details');
     }
@@ -51,10 +426,8 @@ const CourseViewer = () => {
 
   const checkEnrollmentAndMaterials = async () => {
     try {
-      // Check if user is instructor of this course
       const courseRes = await axios.get(`http://localhost:5000/api/courses/${courseId}`);
       const courseData = courseRes.data.course;
-      
       const isInstructor = user && courseData.instructor && (courseData.instructor._id === user._id || courseData.instructor === user._id);
       const isAdmin = user && user.role === 'admin';
 
@@ -62,22 +435,18 @@ const CourseViewer = () => {
         setEnrolled(true);
         setMaterialsLocked(false);
       } else {
-        // For students, check student/enrolled list to see if enrolled
         const enrolledRes = await axios.get('http://localhost:5000/api/courses/student/enrolled', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
         if (enrolledRes.data.success) {
           const isEnrolled = enrolledRes.data.courses.some(c => c._id === courseId);
           setEnrolled(isEnrolled);
         }
       }
 
-      // Fetch study materials (the controller will return success or lock info)
       const materialsRes = await axios.get(`http://localhost:5000/api/study-materials/course/${courseId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
       if (materialsRes.data.success) {
         setMaterials(materialsRes.data.materials || []);
         setMaterialsLocked(false);
@@ -94,24 +463,15 @@ const CourseViewer = () => {
   };
 
   const handleEnroll = async () => {
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    if (user.role === 'instructor') {
-      alert('Instructors cannot enroll in courses.');
-      return;
-    }
-
+    if (!token) { navigate('/login'); return; }
+    if (user.role === 'instructor') { alert('Instructors cannot enroll in courses.'); return; }
     try {
       setEnrollLoading(true);
       const response = await axios.post(`http://localhost:5000/api/courses/${courseId}/enroll`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
       if (response.data.success) {
         setEnrolled(true);
-        // Re-check to fetch materials
         checkEnrollmentAndMaterials();
         alert('Successfully enrolled! Welcome to the course. 🎓');
       }
@@ -131,242 +491,284 @@ const CourseViewer = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   };
 
+  const toggleSection = (idx) => {
+    setExpandedSections(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <CircularProgress />
-      </Box>
+      <div style={{ ...styles.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <CircularProgress sx={{ color: '#3b82f6' }} />
+      </div>
     );
   }
 
   if (error || !course) {
     return (
-      <Container maxWidth="md" sx={{ mt: 5 }}>
-        <Alert severity="error">{error || 'Course not found'}</Alert>
-      </Container>
+      <div style={styles.page}>
+        <div style={{ maxWidth: 600, margin: '5rem auto' }}>
+          <Alert severity="error">{error || 'Course not found'}</Alert>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 6 }}>
-      {/* Course Detail Banner */}
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 3, bgcolor: '#ffffff', mb: 4 }}>
-        <Box sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '3fr 1fr' },
-          gap: 3,
-          alignItems: 'center'
-        }}>
-          <Box>
-            <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
-              <Box sx={{ bgcolor: 'primary.light', color: 'white', px: 1.5, py: 0.5, borderRadius: 1 }}>
-                <Typography variant="caption" sx={{ fontWeight: 'bold' }}>{course.category}</Typography>
-              </Box>
-              <Box sx={{ bgcolor: 'secondary.light', color: 'white', px: 1.5, py: 0.5, borderRadius: 1 }}>
-                <Typography variant="caption" sx={{ fontWeight: 'bold' }}>{course.level}</Typography>
-              </Box>
-            </Box>
-            <Typography variant="h3" component="h1" fontWeight="bold" gutterBottom sx={{ fontSize: { xs: '2rem', md: '2.5rem' } }}>
-              {course.title}
-            </Typography>
-            <Typography variant="h6" color="textSecondary" sx={{ mb: 2, fontWeight: 400 }}>
-              {course.subtitle}
-            </Typography>
-            <Stack direction="row" spacing={2} sx={{ color: 'text.secondary', fontSize: '0.9rem' }}>
-              <Typography variant="body2">⭐ Rating: <strong>{course.rating ? course.rating.toFixed(1) : '0.0'}</strong></Typography>
-              <Typography variant="body2">Instructor: <strong>{course.instructor?.name}</strong></Typography>
-            </Stack>
-          </Box>
+    <div style={styles.page}>
+      <div style={styles.container}>
 
-          <Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+        {/* Hero */}
+        <div style={styles.heroCard}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '2rem', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '280px' }}>
+              <div style={{ marginBottom: '4px' }}>
+                <span style={styles.badge('blue')}>{course.category}</span>
+                <span style={styles.badge('purple')}>{course.level}</span>
+              </div>
+              <h1 style={styles.h1}>{course.title}</h1>
+              {course.subtitle && <p style={styles.subtitle}>{course.subtitle}</p>}
+              <div style={styles.metaRow}>
+                <span style={styles.metaItem}>
+                  ⭐ <span style={styles.metaStrong}>{course.rating ? course.rating.toFixed(1) : '0.0'}</span>
+                </span>
+                <span style={styles.metaItem}>
+                  Instructor: <span style={styles.metaStrong}>{course.instructor?.name}</span>
+                </span>
+              </div>
+            </div>
             {course.thumbnailUrl ? (
-              <CardMedia
-                component="img"
-                image={course.thumbnailUrl}
-                alt="Course preview"
-                sx={{ height: 140, width: 220, borderRadius: 2, objectFit: 'cover', boxShadow: 2 }}
-              />
+              <img src={course.thumbnailUrl} alt="Course preview" style={styles.thumbnailImg} />
             ) : (
-              <Box sx={{ height: 140, width: 220, bgcolor: 'grey.100', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'grey.400' }}>
-                <School sx={{ fontSize: 50 }} />
-              </Box>
+              <div style={styles.thumbnailPlaceholder}>
+                <School sx={{ fontSize: 48, color: 'rgba(59,130,246,0.4)' }} />
+              </div>
             )}
-          </Box>
-        </Box>
-      </Paper>
+          </div>
+        </div>
 
-      {/* Grid Layout: Left Syllabus + details, Right Sidebar */}
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', md: '3fr 1.5fr' },
-        gap: 4
-      }}>
-        {/* LEFT COLUMN */}
-        <Box>
-          {/* Description */}
-          <Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>Course Description</Typography>
-          <Paper elevation={1} sx={{ p: 3, borderRadius: 2, mb: 4 }}>
-            <Typography variant="body1" sx={{ whiteSpace: 'pre-line', lineHeight: 1.7 }}>
+        {/* Main grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) minmax(280px,1fr)', gap: '2rem', alignItems: 'start' }}>
+
+          {/* Left column */}
+          <div>
+            {/* Description */}
+            <span style={styles.sectionLabel}>About this course</span>
+            <div style={styles.descriptionCard}>
               {course.description}
-            </Typography>
-          </Paper>
+            </div>
 
-          {/* Curriculum */}
-          <Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>Syllabus & Curriculum</Typography>
-          <Box sx={{ mb: 4 }}>
-            {course.curriculum && course.curriculum.map((section, sIdx) => (
-              <Accordion key={sIdx} defaultExpanded={sIdx === 0} sx={{ mb: 1.5, border: '1px solid #e0e0e0', boxShadow: 'none' }}>
-                <AccordionSummary expandMoreIcon={<ExpandMore />}>
-                  <Typography fontWeight="bold" sx={{ color: 'primary.main' }}>
-                    Section {sIdx + 1}: {section.sectionTitle}
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails sx={{ p: 0 }}>
-                  <List sx={{ p: 0 }}>
-                    {section.lectures.map((lecture, lIdx) => {
-                      const showPreview = lecture.isFreePreview || enrolled;
-                      return (
-                        <ListItem key={lIdx} sx={{ px: 3, py: 1.5, borderTop: '1px solid #f0f0f0' }}>
-                          <ListItemIcon>
-                            {showPreview ? (
-                              <PlayArrow color="primary" />
-                            ) : (
-                              <Lock color="action" />
-                            )}
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={lecture.title}
-                            secondary={lecture.duration ? `Duration: ${lecture.duration}` : ''}
-                          />
-                          {lecture.isFreePreview && !enrolled && (
-                            <Box sx={{ bgcolor: 'success.light', color: 'white', px: 1, py: 0.2, borderRadius: 0.5 }}>
-                              <Typography variant="caption" sx={{ fontWeight: 'bold' }}>Free Preview</Typography>
-                            </Box>
-                          )}
-                        </ListItem>
-                      );
-                    })}
-                  </List>
-                </AccordionDetails>
-              </Accordion>
-            ))}
-          </Box>
-        </Box>
+            {/* Curriculum */}
+            <span style={styles.sectionLabel}>Curriculum</span>
+            <h2 style={{ ...styles.sectionTitle, marginBottom: '1rem' }}>Syllabus & Lectures</h2>
+            <div>
+              {course.curriculum && course.curriculum.map((section, sIdx) => {
+                const isOpen = !!expandedSections[sIdx];
+                return (
+                  <div key={sIdx} style={{
+                    border: '1px solid rgba(255,255,255,0.07)',
+                    borderRadius: '12px',
+                    marginBottom: '8px',
+                    overflow: 'hidden',
+                    background: 'rgba(255,255,255,0.025)',
+                  }}>
+                    <div style={styles.accordionHeader} onClick={() => toggleSection(sIdx)}>
+                      <div style={styles.accordionTitle}>
+                        <span style={styles.sectionNum}>{sIdx + 1}</span>
+                        {section.sectionTitle}
+                      </div>
+                      <ExpandMore sx={{
+                        color: '#475569',
+                        fontSize: '20px',
+                        transition: 'transform 0.2s',
+                        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      }} />
+                    </div>
+                    {isOpen && (
+                      <div>
+                        {section.lectures.map((lecture, lIdx) => {
+                          const showPreview = lecture.isFreePreview || enrolled;
+                          const clickable = showPreview && lecture.videoUrl;
+                          return (
+                            <div
+                              key={lIdx}
+                              style={{
+                                ...styles.lectureItem,
+                                ...(clickable ? styles.lectureItemClickable : {}),
+                              }}
+                              onMouseEnter={e => { if (clickable) e.currentTarget.style.background = 'rgba(59,130,246,0.07)'; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                              onClick={() => {
+                                if (clickable) setActiveVideo({ title: lecture.title, videoUrl: lecture.videoUrl });
+                              }}
+                            >
+                              {showPreview
+                                ? <PlayArrow sx={{ color: '#60a5fa', fontSize: '18px', flexShrink: 0 }} />
+                                : <Lock sx={{ color: '#334155', fontSize: '16px', flexShrink: 0 }} />
+                              }
+                              <div style={{ flex: 1 }}>
+                                <div style={styles.lectureTitle}>{lecture.title}</div>
+                                {lecture.duration && (
+                                  <div style={styles.lectureDuration}>{lecture.duration}</div>
+                                )}
+                              </div>
+                              {lecture.isFreePreview && !enrolled && (
+                                <span style={styles.freeTag}>Free preview</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-        {/* RIGHT COLUMN (SIDEBAR) */}
-        <Box>
-          {/* Enrollment Card */}
-          <Card elevation={3} sx={{ p: 3, borderRadius: 3, mb: 4, border: '1px solid #e0e0e0' }}>
+          {/* Right column */}
+          <div style={{ position: 'sticky', top: '1.5rem' }}>
+
+            {/* Enrollment card */}
             {enrolled ? (
-              <Stack spacing={2} align="center" sx={{ textAlign: 'center' }}>
-                <LockOpen color="success" sx={{ fontSize: 50, mx: 'auto' }} />
-                <Typography variant="h6" fontWeight="bold" color="success.main">
-                  You are Enrolled!
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  Access all video lectures in the curriculum and download any study material PDFs below.
-                </Typography>
-              </Stack>
+              <div style={styles.enrolledCard}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+                  <div style={styles.enrolledBadge}>
+                    <LockOpen sx={{ fontSize: '18px' }} />
+                    You're enrolled
+                  </div>
+                </div>
+                <p style={{ fontSize: '0.825rem', color: '#64748b', margin: 0, lineHeight: 1.6 }}>
+                  Access all lectures and download study materials below.
+                </p>
+              </div>
             ) : (
-              <Stack spacing={2.5}>
-                <Typography variant="h4" sx={{ fontWeight: 800, textAlign: 'center' }}>
+              <div style={styles.enrollCard}>
+                <div style={styles.price}>
                   ₹{course.price ? course.price.toLocaleString() : '0'}
-                </Typography>
-                <Divider />
-                <Typography variant="body2" color="textSecondary" sx={{ textAlign: 'center' }}>
-                  Get complete lifetime access to all lectures, coding tasks, and resource attachments.
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="large"
+                </div>
+                <div style={styles.priceNote}>One-time · Lifetime access</div>
+                <hr style={styles.divider} />
+                <p style={{ fontSize: '0.825rem', color: '#64748b', textAlign: 'center', marginBottom: '1.25rem', lineHeight: 1.6 }}>
+                  Full access to all lectures, resources, and future updates.
+                </p>
+                <button
+                  style={{
+                    ...styles.enrollBtn,
+                    opacity: enrollLoading ? 0.7 : 1,
+                  }}
                   onClick={handleEnroll}
                   disabled={enrollLoading}
-                  sx={{ py: 1.5, fontWeight: 'bold' }}
+                  onMouseEnter={e => { if (!enrollLoading) { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.transform = 'translateY(-1px)'; }}}
+                  onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)'; }}
                 >
-                  {enrollLoading ? 'Enrolling...' : 'Enroll in Course'}
-                </Button>
-              </Stack>
+                  {enrollLoading ? 'Enrolling…' : 'Enroll Now'}
+                </button>
+              </div>
             )}
-          </Card>
 
-          {/* Study Materials Card */}
-          <Card elevation={3} sx={{ p: 3, borderRadius: 3, border: '1px solid #e0e0e0' }}>
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-              <MenuBook color="primary" />
-              <Typography variant="h6" fontWeight="bold">Study Materials (PDF)</Typography>
-            </Stack>
-            <Divider sx={{ mb: 2 }} />
+            {/* Study Materials */}
+            <div style={styles.materialsCard}>
+              <div style={styles.materialsHeader}>
+                <MenuBook sx={{ color: '#60a5fa', fontSize: '20px' }} />
+                <span style={{ fontSize: '1rem', fontWeight: '600', color: '#e2e8f0' }}>Study Materials</span>
+              </div>
+              <hr style={styles.divider} />
 
-            {materialsLocked ? (
-              <Box sx={{
-                py: 3, px: 2, textAlign: 'center', bgcolor: '#fafafa', borderRadius: 2,
-                border: '1px dashed #ccc'
-              }}>
-                <Lock color="action" sx={{ fontSize: 35, mb: 1, color: 'grey.400' }} />
-                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>PDFs are Locked</Typography>
-                <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mb: 2 }}>
-                  Enroll in this course to view and download study notes, guides, and exercises.
-                </Typography>
-                <Button variant="outlined" size="small" onClick={handleEnroll} startIcon={<LockOpen />}>
-                  Unlock Materials
-                </Button>
-              </Box>
-            ) : materials.length > 0 ? (
-              <Stack spacing={2}>
-                {materials.map((mat) => (
-                  <Paper key={mat._id} variant="outlined" sx={{ p: 2, bgcolor: '#fafafa' }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                      {mat.title}
-                    </Typography>
-                    {mat.description && (
-                      <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mb: 1 }}>
-                        {mat.description}
-                      </Typography>
-                    )}
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography variant="caption" color="grey.500">
-                        {formatBytes(mat.fileSize)}
-                      </Typography>
-                      <Stack direction="row" spacing={1}>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          component="a"
-                          href={mat.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{ py: 0.5, px: 1.5, fontSize: '0.75rem' }}
-                        >
+              {materialsLocked ? (
+                <div style={styles.lockedBlock}>
+                  <Lock sx={{ color: '#334155', fontSize: '30px', marginBottom: '8px' }} />
+                  <p style={{ fontSize: '0.825rem', fontWeight: '600', color: '#475569', margin: '0 0 4px' }}>PDFs are locked</p>
+                  <p style={{ fontSize: '0.775rem', color: '#334155', margin: '0 0 12px', lineHeight: 1.5 }}>
+                    Enroll to unlock study notes and exercises.
+                  </p>
+                  <button style={styles.unlockBtn} onClick={handleEnroll}>
+                    <LockOpen sx={{ fontSize: '14px' }} />
+                    Unlock Materials
+                  </button>
+                </div>
+              ) : materials.length > 0 ? (
+                <div>
+                  {materials.map((mat) => (
+                    <div key={mat._id} style={styles.materialItem}>
+                      <div style={styles.materialTitle}>{mat.title}</div>
+                      {mat.description && <div style={styles.materialDesc}>{mat.description}</div>}
+                      <div style={styles.materialMeta}>{formatBytes(mat.fileSize)}</div>
+                      <div style={styles.materialActions}>
+                        <a href={mat.fileUrl} target="_blank" rel="noopener noreferrer" style={styles.viewBtn}>
                           View
-                        </Button>
-                        <Button
-                          variant="contained"
-                          size="small"
-                          startIcon={<Download />}
-                          component="a"
-                          href={mat.downloadUrl || mat.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{ py: 0.5, px: 1.5, fontSize: '0.75rem' }}
-                        >
+                        </a>
+                        <a href={mat.downloadUrl || mat.fileUrl} target="_blank" rel="noopener noreferrer" style={styles.downloadBtn}>
+                          <Download sx={{ fontSize: '13px' }} />
                           Download
-                        </Button>
-                      </Stack>
-                    </Stack>
-                  </Paper>
-                ))}
-              </Stack>
-            ) : (
-              <Box sx={{ py: 3, textAlign: 'center', bgcolor: '#fafafa', borderRadius: 2 }}>
-                <Info color="disabled" sx={{ fontSize: 30, mb: 1 }} />
-                <Typography variant="body2" color="textSecondary">No PDF resources available.</Typography>
-              </Box>
-            )}
-          </Card>
-        </Box>
-      </Box>
-    </Container>
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={styles.emptyBlock}>
+                  <Info sx={{ fontSize: '28px', marginBottom: '6px', opacity: 0.3 }} />
+                  <p style={{ margin: 0 }}>No PDF resources available.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Video Dialog */}
+      <Dialog
+        open={!!activeVideo}
+        onClose={() => setActiveVideo(null)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          style: {
+            background: '#0d1424',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '16px',
+            overflow: 'hidden',
+          }
+        }}
+      >
+        <DialogContent sx={{ p: 0, position: 'relative' }}>
+          <IconButton
+            onClick={() => setActiveVideo(null)}
+            sx={{
+              position: 'absolute', top: 8, right: 8, zIndex: 1,
+              bgcolor: 'rgba(0,0,0,0.5)',
+              color: '#94a3b8',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.7)', color: '#fff' }
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+          {activeVideo && (
+            <>
+              <div style={{
+                padding: '16px 48px 12px 16px',
+                fontSize: '0.925rem',
+                fontWeight: '600',
+                color: '#e2e8f0',
+                fontFamily: "'Inter', sans-serif",
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+              }}>
+                {activeVideo.title}
+              </div>
+              <div style={{ position: 'relative', paddingTop: '56.25%' }}>
+                <iframe
+                  src={getEmbedUrl(activeVideo.videoUrl)}
+                  title={activeVideo.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                />
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 
