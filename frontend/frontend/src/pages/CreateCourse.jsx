@@ -131,7 +131,7 @@ const selectSx = {
 };
 
 // ─── Steps ────────────────────────────────────────────────────────────────────
-const STEPS = ['Overview', 'Curriculum', 'Pricing & Details'];
+const STEPS = ['Overview', 'Curriculum', 'Pricing & details '];
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const CreateCourse = () => {
@@ -194,9 +194,12 @@ const CreateCourse = () => {
                 <Typography
                   variant="h4"
                   sx={{
-                    fontWeight: 800,
+                    fontWeight: 890,
                     letterSpacing: '-0.5px',
                     color: '#d0e0da',
+                     fontSize: { xs: '1.6rem', sm: '2.125rem' },
+                     wordBreak: 'break-word',
+                     overflowWrap: 'anywhere',
                     lineHeight: 1.2,
                   }}
                 >
@@ -207,24 +210,33 @@ const CreateCourse = () => {
                 </Typography>
               </Box>
 
-              {/* Stepper */}
-              <Stepper
-                activeStep={activeStep}
-                sx={{
-                  mb: 5,
-                  '& .MuiStepLabel-label': { fontWeight: 600, fontSize: '0.85rem' },
-                  '& .MuiStepLabel-label.Mui-active': { color: '#063f49' },
-                  '& .MuiStepLabel-label.Mui-completed': { color: '#388E3C' },
-                  '& .MuiStepIcon-root.Mui-active': { color: '#085349' },
-                  '& .MuiStepIcon-root.Mui-completed': { color: '#0d6657' },
-                  '& .MuiStepConnector-line': { borderColor: '#C5D0E6' },
-                }}
-              >
-                {STEPS.map(label => (
-                  <Step key={label}><StepLabel>{label}</StepLabel></Step>
-                ))}
-              </Stepper>
-
+            <Stepper
+  activeStep={activeStep}
+  alternativeLabel
+  sx={{
+    mb: 5,
+    '& .MuiStepLabel-label': {
+      fontWeight: 600,
+      fontSize: { xs: '0.7rem', sm: '0.85rem' },
+      whiteSpace: 'normal',
+      textAlign: 'center',
+      lineHeight: 1.2,
+      wordBreak: 'break-word',
+      maxWidth: { xs: 70, sm: 120 },
+    },
+    '& .MuiStepLabel-label.Mui-active': { color: '#0b2e35' },
+    '& .MuiStepLabel-label.Mui-completed': { color: '#16661a' },
+    '& .MuiStepIcon-root.Mui-active': { color: '#085349' },
+    '& .MuiStepIcon-root.Mui-completed': { color: '#0d6657' },
+    '& .MuiStepConnector-line': { borderColor: '#C5D0E6' },
+  }}
+>
+  {STEPS.map((label) => (
+    <Step key={label}>
+      <StepLabel>{label}</StepLabel>
+    </Step>
+  ))}
+</Stepper>
               {/* Error */}
               {submitError && (
                 <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
@@ -318,7 +330,7 @@ const CreateCourse = () => {
                       elevation={0}
                       sx={{
                         mb: 3,
-                        p: 3,
+                        p: 2,
                         borderRadius: 3,
                         bgcolor: '#F8FAFF',
                         border: '1.5px solid #D0D9F0',
@@ -392,7 +404,7 @@ const CreateCourse = () => {
                 <Stack spacing={3}>
                   <Box
                     sx={{
-                      p: 3,
+                      p: 2,
                       borderRadius: 3,
                       bgcolor: '#F8FAFF',
                       border: '1.5px solid #D0D9F0',

@@ -21,12 +21,12 @@ const StudentDashboard = () => {
 
   const user  = (() => { try { return JSON.parse(localStorage.getItem('user')); } catch { return null; } })();
   const token = user?.token;
-
+ const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const fetchDashboardData = async () => {
     setLoading(true);
     const [enrolledResult, allResult] = await Promise.allSettled([
-      axios.get('http://localhost:5000/api/courses/student/enrolled', { headers: { Authorization: `Bearer ${token}` } }),
-      axios.get('http://localhost:5000/api/courses'),
+      axios.get(`${API}/api/courses/student/enrolled`, { headers: { Authorization: `Bearer ${token}` } }),
+      axios.get(`${API}/api/courses`),
     ]);
 
     if (enrolledResult.status === 'fulfilled' && enrolledResult.value.data.success)

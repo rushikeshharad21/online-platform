@@ -397,7 +397,7 @@ const CourseViewer = () => {
   const storedUser = localStorage.getItem('user');
   const user  = storedUser ? JSON.parse(storedUser) : null;
   const token = user?.token;
-
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   useEffect(() => {
     fetchCourseDetails();
     if (token) checkEnrollmentAndMaterials();
@@ -406,7 +406,7 @@ const CourseViewer = () => {
 
   const fetchCourseDetails = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/courses/${courseId}`);
+      const response = await axios.get(`${API}/api/courses/${courseId}`);
       if (response.data.success) setCourse(response.data.course);
     } catch (err) {
       setError(err.response?.data?.message || 'Error loading course details');
@@ -415,7 +415,7 @@ const CourseViewer = () => {
 
   const checkEnrollmentAndMaterials = async () => {
     try {
-      const courseRes  = await axios.get(`http://localhost:5000/api/courses/${courseId}`);
+      const courseRes  = await axios.get(`${API}/api/courses/${courseId}`);
       const courseData = courseRes.data.course;
       const isInstructor = user && courseData.instructor &&
         (courseData.instructor._id === user._id || courseData.instructor === user._id);
@@ -425,7 +425,7 @@ const CourseViewer = () => {
         setEnrolled(true);
         setMaterialsLocked(false);
       } else {
-        const enrolledRes = await axios.get('http://localhost:5000/api/courses/student/enrolled', {
+        const enrolledRes = await axios.get('${API}/api/courses/student/enrolled', {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (enrolledRes.data.success) {
@@ -433,7 +433,7 @@ const CourseViewer = () => {
         }
       }
 
-      const materialsRes = await axios.get(`http://localhost:5000/api/study-materials/course/${courseId}`, {
+      const materialsRes = await axios.get(`${API}/api/study-materials/course/${courseId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (materialsRes.data.success) {
@@ -453,7 +453,7 @@ const CourseViewer = () => {
     if (user.role === 'instructor') { alert('Instructors cannot enroll in courses.'); return; }
     try {
       setEnrollLoading(true);
-      const response = await axios.post(`http://localhost:5000/api/courses/${courseId}/enroll`, {}, {
+      const response = await axios.post(`${API}/api/courses/${courseId}/enroll`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.data.success) {
