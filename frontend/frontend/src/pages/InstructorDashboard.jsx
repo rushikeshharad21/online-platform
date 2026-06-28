@@ -1,16 +1,18 @@
+// src/pages/InstructorDashboard.jsx
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Container, Box, Typography, Button, CircularProgress, Alert, Tooltip
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import AddIcon                       from '@mui/icons-material/Add';
+import EditOutlinedIcon              from '@mui/icons-material/EditOutlined';
 import ImageNotSupportedOutlinedIcon from '@mui/icons-material/ImageNotSupportedOutlined';
-import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
-import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
-import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import PeopleAltOutlinedIcon         from '@mui/icons-material/PeopleAltOutlined';
+import MenuBookOutlinedIcon          from '@mui/icons-material/MenuBookOutlined';
+import SchoolOutlinedIcon            from '@mui/icons-material/SchoolOutlined';
+import TrendingUpIcon                from '@mui/icons-material/TrendingUp';
+import QuizOutlinedIcon              from '@mui/icons-material/QuizOutlined'; // ← NEW
 import { fetchMyCourses, togglePublishStatus } from '../features/courses/courseSlice';
 
 /* ─── Tokens ──────────────────────────────────────────────────── */
@@ -40,47 +42,39 @@ const tk = {
 };
 
 const glass = (extra = {}) => ({
-  background: tk.surface,
-  border: `1px solid ${tk.border}`,
-  backdropFilter: tk.blur,
+  background:          tk.surface,
+  border:              `1px solid ${tk.border}`,
+  backdropFilter:      tk.blur,
   WebkitBackdropFilter: tk.blur,
-  borderRadius: tk.r,
+  borderRadius:        tk.r,
   ...extra,
 });
 
-/* ─── Stat tile ───────────────────────────────────────────────── */
+/* ─── Stat Tile ───────────────────────────────────────────────── */
 const STAT_META = [
-  { key: 'courses',  label: 'Total courses',  color: tk.blue,   glow: tk.blueGlow,   border: tk.blueBorder,   Icon: SchoolOutlinedIcon },
-  { key: 'pub',      label: 'Published',       color: tk.green,  glow: tk.greenGlow,  border: tk.greenBorder,  Icon: TrendingUpIcon },
-  { key: 'drafts',   label: 'Drafts',          color: tk.amber,  glow: tk.amberGlow,  border: tk.amberBorder,  Icon: EditOutlinedIcon },
-  { key: 'students', label: 'Total students',  color: tk.purple, glow: tk.purpleGlow, border: tk.purpleBorder, Icon: PeopleAltOutlinedIcon },
+  { key: 'courses',  label: 'Total courses', color: tk.blue,   glow: tk.blueGlow,   border: tk.blueBorder,   Icon: SchoolOutlinedIcon    },
+  { key: 'pub',      label: 'Published',      color: tk.green,  glow: tk.greenGlow,  border: tk.greenBorder,  Icon: TrendingUpIcon         },
+  { key: 'drafts',   label: 'Drafts',          color: tk.amber,  glow: tk.amberGlow,  border: tk.amberBorder,  Icon: EditOutlinedIcon       },
+  { key: 'students', label: 'Total students', color: tk.purple, glow: tk.purpleGlow, border: tk.purpleBorder, Icon: PeopleAltOutlinedIcon  },
 ];
 
 const StatTile = ({ label, value, color, glow, border, Icon }) => (
   <Box sx={{
     ...glass(),
     p: '18px 20px 16px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-    position: 'relative',
-    overflow: 'hidden',
+    display: 'flex', flexDirection: 'column', gap: '12px',
+    position: 'relative', overflow: 'hidden',
     transition: 'border-color 0.2s, background 0.2s',
     '&:hover': { background: tk.surfaceHover, borderColor: tk.borderHover },
     '&::after': {
-      content: '""',
-      position: 'absolute',
+      content: '""', position: 'absolute',
       top: '-24px', right: '-24px',
-      width: '90px', height: '90px',
-      borderRadius: '50%',
-      background: glow,
-      pointerEvents: 'none',
+      width: '90px', height: '90px', borderRadius: '50%',
+      background: glow, pointerEvents: 'none',
     },
     '&::before': {
-      content: '""',
-      position: 'absolute',
-      top: 0, left: '20px', right: '20px',
-      height: '1px',
+      content: '""', position: 'absolute',
+      top: 0, left: '20px', right: '20px', height: '1px',
       background: `linear-gradient(90deg, transparent, ${color}, transparent)`,
       opacity: 0.6,
     },
@@ -99,23 +93,22 @@ const StatTile = ({ label, value, color, glow, border, Icon }) => (
     </Box>
     <Typography sx={{
       fontSize: '32px', fontWeight: 700, color: tk.text1,
-      lineHeight: 1, letterSpacing: '-0.04em',
-      fontVariantNumeric: 'tabular-nums',
+      lineHeight: 1, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums',
     }}>
       {value}
     </Typography>
   </Box>
 );
 
-/* ─── Course card ─────────────────────────────────────────────── */
+/* ─── Course Card ─────────────────────────────────────────────── */
 const CourseCard = ({ course, isPending, onToggle }) => {
   const published = !!course.isPublished;
+
   return (
     <Box sx={{
       ...glass(),
       display: 'flex', flexDirection: 'column',
-      height: '100%',
-      overflow: 'hidden',
+      height: '100%', overflow: 'hidden',
       transition: 'transform 0.22s ease, box-shadow 0.22s ease, border-color 0.2s',
       '&:hover': {
         transform: 'translateY(-5px)',
@@ -146,8 +139,7 @@ const CourseCard = ({ course, isPending, onToggle }) => {
               position: 'absolute', inset: 0,
               width: '100%', height: '100%',
               objectFit: 'cover', objectPosition: 'center',
-              display: 'block',
-              transition: 'transform 0.5s ease',
+              display: 'block', transition: 'transform 0.5s ease',
             }}
           />
         ) : (
@@ -206,14 +198,12 @@ const CourseCard = ({ course, isPending, onToggle }) => {
       {/* Card body */}
       <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', px: '16px', pt: '14px', pb: 0 }}>
         <Typography sx={{
-          fontSize: '14px', fontWeight: 600, color: tk.text1,
-          lineHeight: 1.45,
+          fontSize: '14px', fontWeight: 600, color: tk.text1, lineHeight: 1.45,
           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
           overflow: 'hidden', minHeight: '2.9em', mb: '12px',
         }}>
           {course.title}
         </Typography>
-
         <Box sx={{ display: 'flex', gap: '16px', mt: 'auto', mb: '14px' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <PeopleAltOutlinedIcon sx={{ fontSize: '12px', color: tk.text3 }} />
@@ -228,13 +218,15 @@ const CourseCard = ({ course, isPending, onToggle }) => {
         </Box>
       </Box>
 
-      {/* Footer */}
+      {/* ─── Footer ─────────────────────────────────────────── */}
       <Box sx={{
-        display: 'flex', alignItems: 'center', gap: '8px',
+        display: 'flex', alignItems: 'center', gap: '6px',
         px: '12px', pb: '12px', pt: '10px',
         borderTop: `1px solid ${tk.border}`,
+        flexWrap: 'wrap', // ← allows 3 buttons to wrap on small cards
       }}>
-        {/* Custom toggle */}
+
+        {/* Publish toggle */}
         <Tooltip title={published ? 'Unpublish' : 'Publish'} arrow placement="top">
           <Box
             onClick={() => !isPending && onToggle(course)}
@@ -250,7 +242,6 @@ const CourseCard = ({ course, isPending, onToggle }) => {
               '&:hover': { background: published ? 'rgba(52,211,153,0.22)' : 'rgba(251,191,36,0.20)' },
             }}
           >
-            {/* Toggle track */}
             <Box sx={{
               width: '28px', height: '16px', borderRadius: '8px',
               background: published ? tk.green : 'rgba(255,255,255,0.12)',
@@ -265,7 +256,7 @@ const CourseCard = ({ course, isPending, onToggle }) => {
               }} />
             </Box>
             <Typography sx={{ fontSize: '10px', fontWeight: 600, color: published ? tk.green : tk.amber, letterSpacing: '0.04em' }}>
-              {isPending ? '···' : (published ? 'Published' : 'Draft')}
+              {isPending ? '···' : published ? 'Published' : 'Draft'}
             </Typography>
           </Box>
         </Tooltip>
@@ -295,6 +286,32 @@ const CourseCard = ({ course, isPending, onToggle }) => {
         >
           Edit
         </Button>
+
+        {/* Tests button ← NEW */}
+        <Button
+          component={Link}
+          to={`/instructor/courses/${course._id}/tests`}
+          fullWidth
+          startIcon={<QuizOutlinedIcon sx={{ fontSize: '13px !important' }} />}
+          disableElevation
+          disableRipple
+          sx={{
+            borderRadius: '8px', fontWeight: 600, fontSize: '12px',
+            py: '6px', letterSpacing: '0.025em',
+            background: 'rgba(167,139,250,0.08)',
+            border: '1px solid rgba(167,139,250,0.22)',
+            color: 'rgba(167,139,250,0.85)',
+            transition: 'background 0.18s, border-color 0.18s, color 0.18s',
+            '&:hover': {
+              background: 'rgba(167,139,250,0.18)',
+              borderColor: 'rgba(167,139,250,0.4)',
+              color: '#c4b5fd',
+            },
+          }}
+        >
+          Tests
+        </Button>
+
       </Box>
     </Box>
   );
@@ -321,8 +338,7 @@ const InstructorDashboard = () => {
   const publishedCount = courses.filter(c => c.isPublished).length;
   const draftCount     = courses.length - publishedCount;
   const totalStudents  = courses.reduce((sum, c) => sum + (c.enrolledCount || 0), 0);
-
-  const statValues = { courses: courses.length, pub: publishedCount, drafts: draftCount, students: totalStudents };
+  const statValues     = { courses: courses.length, pub: publishedCount, drafts: draftCount, students: totalStudents };
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: tk.bg, pt: 5, pb: 10 }}>

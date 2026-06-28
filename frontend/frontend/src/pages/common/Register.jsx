@@ -78,8 +78,8 @@ function Register() {
 
           <Box component="form" onSubmit={onSubmit} noValidate>
             <Grid container spacing={2}>
-              <Grid item xs={12}><TextField required fullWidth label="Full Name" name="name" value={name} onChange={onChange} disabled={isLoading} sx={inputStyles} /></Grid>
-              <Grid item xs={12}><TextField required fullWidth label="Email Address" name="email" value={email} onChange={onChange} disabled={isLoading} sx={inputStyles} /></Grid>
+              <Grid size={{ xs:12}}><TextField required fullWidth label="Full Name" name="name" value={name} onChange={onChange} disabled={isLoading} sx={inputStyles} /></Grid>
+              <Grid size={{xs:12}}><TextField required fullWidth label="Email Address" name="email" value={email} onChange={onChange} disabled={isLoading} sx={inputStyles} /></Grid>
               <Grid size= {{xs:12}}>
                 <TextField select required fullWidth label="Register As" name="role" value={role} onChange={onChange} disabled={isLoading} sx={inputStyles}>
                   <MenuItem value="student">Student</MenuItem>

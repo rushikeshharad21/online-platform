@@ -1,12 +1,14 @@
+// src/pages/CourseViewer.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import {
   CircularProgress, Alert, Dialog, DialogContent, IconButton
 } from '@mui/material';
 import {
   ExpandMore, PlayArrow, Lock, Download, School,
-  LockOpen, MenuBook, Info, Close as CloseIcon
+  LockOpen, MenuBook, Info, Close as CloseIcon,
+  QuizOutlined as QuizOutlinedIcon,
 } from '@mui/icons-material';
 
 const getEmbedUrl = (url) => {
@@ -20,7 +22,7 @@ const styles = {
   page: {
     minHeight: '100vh',
     background: 'linear-gradient(135deg, #060d1f 0%, #0a1628 50%, #0d1f3c 100%)',
-    padding: '2rem 1rem 4rem',
+    padding: '1.5rem 1rem 4rem',
     fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
     color: '#e2e8f0',
   },
@@ -35,19 +37,12 @@ const styles = {
     border: '1px solid rgba(255,255,255,0.1)',
     borderRadius: '16px',
   },
-  glassStrong: {
-    background: 'rgba(255,255,255,0.07)',
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
-    border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: '16px',
-  },
   heroCard: {
     background: 'rgba(255,255,255,0.05)',
     backdropFilter: 'blur(20px)',
     border: '1px solid rgba(255,255,255,0.1)',
     borderRadius: '20px',
-    padding: '2.5rem',
+    padding: 'clamp(1.25rem, 4vw, 2.5rem)',
     marginBottom: '2rem',
   },
   badge: (color) => ({
@@ -65,7 +60,7 @@ const styles = {
     marginBottom: '16px',
   }),
   h1: {
-    fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
+    fontSize: 'clamp(1.4rem, 4vw, 2.8rem)',
     fontWeight: '700',
     color: '#f1f5f9',
     margin: '0 0 0.75rem',
@@ -73,7 +68,7 @@ const styles = {
     letterSpacing: '-0.02em',
   },
   subtitle: {
-    fontSize: '1.05rem',
+    fontSize: 'clamp(0.875rem, 2vw, 1.05rem)',
     color: '#94a3b8',
     margin: '0 0 1.25rem',
     fontWeight: '400',
@@ -81,7 +76,7 @@ const styles = {
   },
   metaRow: {
     display: 'flex',
-    gap: '1.5rem',
+    gap: '1rem',
     flexWrap: 'wrap',
     fontSize: '0.875rem',
     color: '#64748b',
@@ -97,7 +92,8 @@ const styles = {
     fontWeight: '500',
   },
   thumbnailPlaceholder: {
-    width: '220px',
+    width: '100%',
+    maxWidth: '220px',
     height: '140px',
     borderRadius: '12px',
     background: 'rgba(59,130,246,0.1)',
@@ -109,17 +105,13 @@ const styles = {
     flexShrink: 0,
   },
   thumbnailImg: {
-    width: '220px',
+    width: '100%',
+    maxWidth: '220px',
     height: '140px',
     borderRadius: '12px',
     objectFit: 'cover',
     border: '1px solid rgba(255,255,255,0.1)',
     flexShrink: 0,
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'minmax(0, 1fr)',
-    gap: '2rem',
   },
   sectionLabel: {
     fontSize: '0.7rem',
@@ -131,7 +123,7 @@ const styles = {
     display: 'block',
   },
   sectionTitle: {
-    fontSize: '1.35rem',
+    fontSize: 'clamp(1.1rem, 3vw, 1.35rem)',
     fontWeight: '600',
     color: '#e2e8f0',
     margin: '0 0 1rem',
@@ -140,19 +132,12 @@ const styles = {
     background: 'rgba(255,255,255,0.04)',
     border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: '12px',
-    padding: '1.5rem',
+    padding: 'clamp(1rem, 3vw, 1.5rem)',
     marginBottom: '2rem',
     lineHeight: 1.8,
     color: '#94a3b8',
-    fontSize: '0.95rem',
+    fontSize: 'clamp(0.85rem, 2vw, 0.95rem)',
     whiteSpace: 'pre-line',
-  },
-  accordion: {
-    border: '1px solid rgba(255,255,255,0.07)',
-    borderRadius: '12px !important',
-    marginBottom: '8px',
-    overflow: 'hidden',
-    background: 'rgba(255,255,255,0.03)',
   },
   accordionHeader: {
     display: 'flex',
@@ -164,7 +149,7 @@ const styles = {
     borderBottom: '1px solid rgba(255,255,255,0.07)',
   },
   accordionTitle: {
-    fontSize: '0.95rem',
+    fontSize: 'clamp(0.85rem, 2vw, 0.95rem)',
     fontWeight: '600',
     color: '#e2e8f0',
     display: 'flex',
@@ -193,11 +178,8 @@ const styles = {
     transition: 'background 0.15s',
     cursor: 'default',
   },
-  lectureItemClickable: {
-    cursor: 'pointer',
-  },
   lectureTitle: {
-    fontSize: '0.875rem',
+    fontSize: 'clamp(0.8rem, 2vw, 0.875rem)',
     color: '#cbd5e1',
     flex: 1,
   },
@@ -218,21 +200,11 @@ const styles = {
     border: '1px solid rgba(16,185,129,0.25)',
     flexShrink: 0,
   },
-  playIcon: {
-    color: '#60a5fa',
-    fontSize: '18px',
-    flexShrink: 0,
-  },
-  lockIcon: {
-    color: '#334155',
-    fontSize: '16px',
-    flexShrink: 0,
-  },
   enrollCard: {
     background: 'linear-gradient(145deg, rgba(59,130,246,0.15) 0%, rgba(99,102,241,0.1) 100%)',
     border: '1px solid rgba(59,130,246,0.3)',
     borderRadius: '16px',
-    padding: '1.75rem',
+    padding: 'clamp(1.25rem, 3vw, 1.75rem)',
     marginBottom: '1.5rem',
     position: 'relative',
     overflow: 'hidden',
@@ -241,12 +213,12 @@ const styles = {
     background: 'linear-gradient(145deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.08) 100%)',
     border: '1px solid rgba(16,185,129,0.3)',
     borderRadius: '16px',
-    padding: '1.75rem',
+    padding: 'clamp(1.25rem, 3vw, 1.75rem)',
     marginBottom: '1.5rem',
     textAlign: 'center',
   },
   price: {
-    fontSize: '2.2rem',
+    fontSize: 'clamp(1.6rem, 4vw, 2.2rem)',
     fontWeight: '800',
     color: '#f1f5f9',
     textAlign: 'center',
@@ -296,7 +268,7 @@ const styles = {
     background: 'rgba(255,255,255,0.04)',
     border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: '16px',
-    padding: '1.5rem',
+    padding: 'clamp(1rem, 3vw, 1.5rem)',
   },
   materialsHeader: {
     display: 'flex',
@@ -330,6 +302,7 @@ const styles = {
     display: 'flex',
     gap: '8px',
     marginTop: '10px',
+    flexWrap: 'wrap',
   },
   viewBtn: {
     display: 'inline-block',
@@ -385,34 +358,50 @@ const styles = {
     fontWeight: '600',
     marginBottom: '12px',
   },
+  // ── Tests button ──────────────────────────────────────────────
+  testsBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    width: '100%',
+    padding: '0.75rem',
+    background: 'rgba(167,139,250,0.1)',
+    color: '#c4b5fd',
+    border: '1px solid rgba(167,139,250,0.28)',
+    borderRadius: '10px',
+    fontSize: '0.9rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    marginTop: '12px',
+    textDecoration: 'none',
+    transition: 'background 0.18s, border-color 0.18s',
+    letterSpacing: '0.01em',
+  },
 };
 
 const CourseViewer = () => {
   const { courseId } = useParams();
-  const navigate = useNavigate();
+  const navigate     = useNavigate();
 
-  const [course, setCourse] = useState(null);
-  const [materials, setMaterials] = useState([]);
-  const [materialsLocked, setMaterialsLocked] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [enrollLoading, setEnrollLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [enrolled, setEnrolled] = useState(false);
-  const [activeVideo, setActiveVideo] = useState(null);
+  const [course,           setCourse]           = useState(null);
+  const [materials,        setMaterials]        = useState([]);
+  const [materialsLocked,  setMaterialsLocked]  = useState(false);
+  const [loading,          setLoading]          = useState(true);
+  const [enrollLoading,    setEnrollLoading]    = useState(false);
+  const [error,            setError]            = useState('');
+  const [enrolled,         setEnrolled]         = useState(false);
+  const [activeVideo,      setActiveVideo]      = useState(null);
   const [expandedSections, setExpandedSections] = useState({ 0: true });
 
   const storedUser = localStorage.getItem('user');
-  const user = storedUser ? JSON.parse(storedUser) : null;
+  const user  = storedUser ? JSON.parse(storedUser) : null;
   const token = user?.token;
 
   useEffect(() => {
     fetchCourseDetails();
-    if (token) {
-      checkEnrollmentAndMaterials();
-    } else {
-      setMaterialsLocked(true);
-      setLoading(false);
-    }
+    if (token) checkEnrollmentAndMaterials();
+    else { setMaterialsLocked(true); setLoading(false); }
   }, [courseId, token]);
 
   const fetchCourseDetails = async () => {
@@ -426,9 +415,10 @@ const CourseViewer = () => {
 
   const checkEnrollmentAndMaterials = async () => {
     try {
-      const courseRes = await axios.get(`http://localhost:5000/api/courses/${courseId}`);
+      const courseRes  = await axios.get(`http://localhost:5000/api/courses/${courseId}`);
       const courseData = courseRes.data.course;
-      const isInstructor = user && courseData.instructor && (courseData.instructor._id === user._id || courseData.instructor === user._id);
+      const isInstructor = user && courseData.instructor &&
+        (courseData.instructor._id === user._id || courseData.instructor === user._id);
       const isAdmin = user && user.role === 'admin';
 
       if (isInstructor || isAdmin) {
@@ -436,27 +426,23 @@ const CourseViewer = () => {
         setMaterialsLocked(false);
       } else {
         const enrolledRes = await axios.get('http://localhost:5000/api/courses/student/enrolled', {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (enrolledRes.data.success) {
-          const isEnrolled = enrolledRes.data.courses.some(c => c._id === courseId);
-          setEnrolled(isEnrolled);
+          setEnrolled(enrolledRes.data.courses.some(c => c._id === courseId));
         }
       }
 
       const materialsRes = await axios.get(`http://localhost:5000/api/study-materials/course/${courseId}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (materialsRes.data.success) {
         setMaterials(materialsRes.data.materials || []);
         setMaterialsLocked(false);
       }
     } catch (err) {
-      if (err.response && err.response.status === 403 && err.response.data.isLocked) {
-        setMaterialsLocked(true);
-      } else {
-        console.error('Error checking materials access:', err);
-      }
+      if (err.response?.status === 403 && err.response.data.isLocked) setMaterialsLocked(true);
+      else console.error('Error checking materials access:', err);
     } finally {
       setLoading(false);
     }
@@ -468,7 +454,7 @@ const CourseViewer = () => {
     try {
       setEnrollLoading(true);
       const response = await axios.post(`http://localhost:5000/api/courses/${courseId}/enroll`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (response.data.success) {
         setEnrolled(true);
@@ -484,43 +470,44 @@ const CourseViewer = () => {
 
   const formatBytes = (bytes, decimals = 2) => {
     if (!bytes) return '0 Bytes';
-    const k = 1024;
+    const k  = 1024;
     const dm = decimals < 0 ? 0 : decimals;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    const i  = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   };
 
-  const toggleSection = (idx) => {
+  const toggleSection = (idx) =>
     setExpandedSections(prev => ({ ...prev, [idx]: !prev[idx] }));
-  };
 
-  if (loading) {
-    return (
-      <div style={{ ...styles.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <CircularProgress sx={{ color: '#3b82f6' }} />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div style={{ ...styles.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <CircularProgress sx={{ color: '#3b82f6' }} />
+    </div>
+  );
 
-  if (error || !course) {
-    return (
-      <div style={styles.page}>
-        <div style={{ maxWidth: 600, margin: '5rem auto' }}>
-          <Alert severity="error">{error || 'Course not found'}</Alert>
-        </div>
+  if (error || !course) return (
+    <div style={styles.page}>
+      <div style={{ maxWidth: 600, margin: '5rem auto' }}>
+        <Alert severity="error">{error || 'Course not found'}</Alert>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div style={styles.page}>
       <div style={styles.container}>
 
-        {/* Hero */}
+        {/* ── Hero ─────────────────────────────────────────────── */}
         <div style={styles.heroCard}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '2rem', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: '280px' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: '1.5rem',
+            flexWrap: 'wrap',
+          }}>
+            <div style={{ flex: 1, minWidth: '240px' }}>
               <div style={{ marginBottom: '4px' }}>
                 <span style={styles.badge('blue')}>{course.category}</span>
                 <span style={styles.badge('purple')}>{course.level}</span>
@@ -546,20 +533,22 @@ const CourseViewer = () => {
           </div>
         </div>
 
-        {/* Main grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) minmax(280px,1fr)', gap: '2rem', alignItems: 'start' }}>
-
+        {/* ── Main grid ─────────────────────────────────────────── */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 2fr) minmax(260px, 1fr)',
+          gap: '2rem',
+          alignItems: 'start',
+        }}
+          className="course-grid"
+        >
           {/* Left column */}
           <div>
-            {/* Description */}
             <span style={styles.sectionLabel}>About this course</span>
-            <div style={styles.descriptionCard}>
-              {course.description}
-            </div>
+            <div style={styles.descriptionCard}>{course.description}</div>
 
-            {/* Curriculum */}
             <span style={styles.sectionLabel}>Curriculum</span>
-            <h2 style={{ ...styles.sectionTitle, marginBottom: '1rem' }}>Syllabus & Lectures</h2>
+            <h2 style={{ ...styles.sectionTitle, marginBottom: '1rem' }}>Syllabus &amp; Lectures</h2>
             <div>
               {course.curriculum && course.curriculum.map((section, sIdx) => {
                 const isOpen = !!expandedSections[sIdx];
@@ -577,8 +566,7 @@ const CourseViewer = () => {
                         {section.sectionTitle}
                       </div>
                       <ExpandMore sx={{
-                        color: '#475569',
-                        fontSize: '20px',
+                        color: '#475569', fontSize: '20px',
                         transition: 'transform 0.2s',
                         transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                       }} />
@@ -587,13 +575,13 @@ const CourseViewer = () => {
                       <div>
                         {section.lectures.map((lecture, lIdx) => {
                           const showPreview = lecture.isFreePreview || enrolled;
-                          const clickable = showPreview && lecture.videoUrl;
+                          const clickable   = showPreview && lecture.videoUrl;
                           return (
                             <div
                               key={lIdx}
                               style={{
                                 ...styles.lectureItem,
-                                ...(clickable ? styles.lectureItemClickable : {}),
+                                ...(clickable ? { cursor: 'pointer' } : {}),
                               }}
                               onMouseEnter={e => { if (clickable) e.currentTarget.style.background = 'rgba(59,130,246,0.07)'; }}
                               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
@@ -603,13 +591,11 @@ const CourseViewer = () => {
                             >
                               {showPreview
                                 ? <PlayArrow sx={{ color: '#60a5fa', fontSize: '18px', flexShrink: 0 }} />
-                                : <Lock sx={{ color: '#334155', fontSize: '16px', flexShrink: 0 }} />
+                                : <Lock      sx={{ color: '#334155', fontSize: '16px', flexShrink: 0 }} />
                               }
                               <div style={{ flex: 1 }}>
                                 <div style={styles.lectureTitle}>{lecture.title}</div>
-                                {lecture.duration && (
-                                  <div style={styles.lectureDuration}>{lecture.duration}</div>
-                                )}
+                                {lecture.duration && <div style={styles.lectureDuration}>{lecture.duration}</div>}
                               </div>
                               {lecture.isFreePreview && !enrolled && (
                                 <span style={styles.freeTag}>Free preview</span>
@@ -640,6 +626,23 @@ const CourseViewer = () => {
                 <p style={{ fontSize: '0.825rem', color: '#64748b', margin: 0, lineHeight: 1.6 }}>
                   Access all lectures and download study materials below.
                 </p>
+
+                {/* ── View Tests button ── */}
+                <Link
+                  to={`/student/courses/${courseId}/tests`}
+                  style={styles.testsBtn}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background    = 'rgba(167,139,250,0.2)';
+                    e.currentTarget.style.borderColor   = 'rgba(167,139,250,0.5)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background    = 'rgba(167,139,250,0.1)';
+                    e.currentTarget.style.borderColor   = 'rgba(167,139,250,0.28)';
+                  }}
+                >
+                  <QuizOutlinedIcon sx={{ fontSize: '18px' }} />
+                  View Tests
+                </Link>
               </div>
             ) : (
               <div style={styles.enrollCard}>
@@ -652,10 +655,7 @@ const CourseViewer = () => {
                   Full access to all lectures, resources, and future updates.
                 </p>
                 <button
-                  style={{
-                    ...styles.enrollBtn,
-                    opacity: enrollLoading ? 0.7 : 1,
-                  }}
+                  style={{ ...styles.enrollBtn, opacity: enrollLoading ? 0.7 : 1 }}
                   onClick={handleEnroll}
                   disabled={enrollLoading}
                   onMouseEnter={e => { if (!enrollLoading) { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.transform = 'translateY(-1px)'; }}}
@@ -694,10 +694,8 @@ const CourseViewer = () => {
                       {mat.description && <div style={styles.materialDesc}>{mat.description}</div>}
                       <div style={styles.materialMeta}>{formatBytes(mat.fileSize)}</div>
                       <div style={styles.materialActions}>
-                        <a href={mat.fileUrl} target="_blank" rel="noopener noreferrer" style={styles.viewBtn}>
-                          View
-                        </a>
-                        <a href={mat.downloadUrl || mat.fileUrl} target="_blank" rel="noopener noreferrer" style={styles.downloadBtn}>
+                        <a href={mat.fileUrl}                       target="_blank" rel="noopener noreferrer" style={styles.viewBtn}>View</a>
+                        <a href={mat.downloadUrl || mat.fileUrl}    target="_blank" rel="noopener noreferrer" style={styles.downloadBtn}>
                           <Download sx={{ fontSize: '13px' }} />
                           Download
                         </a>
@@ -716,6 +714,18 @@ const CourseViewer = () => {
         </div>
       </div>
 
+      {/* Responsive grid CSS */}
+      <style>{`
+        @media (max-width: 768px) {
+          .course-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .course-grid > div:last-child {
+            position: static !important;
+          }
+        }
+      `}</style>
+
       {/* Video Dialog */}
       <Dialog
         open={!!activeVideo}
@@ -728,7 +738,10 @@ const CourseViewer = () => {
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: '16px',
             overflow: 'hidden',
-          }
+            margin: '16px',
+            width: 'calc(100% - 32px)',
+            maxWidth: '800px',
+          },
         }}
       >
         <DialogContent sx={{ p: 0, position: 'relative' }}>
@@ -736,9 +749,8 @@ const CourseViewer = () => {
             onClick={() => setActiveVideo(null)}
             sx={{
               position: 'absolute', top: 8, right: 8, zIndex: 1,
-              bgcolor: 'rgba(0,0,0,0.5)',
-              color: '#94a3b8',
-              '&:hover': { bgcolor: 'rgba(0,0,0,0.7)', color: '#fff' }
+              bgcolor: 'rgba(0,0,0,0.5)', color: '#94a3b8',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.7)', color: '#fff' },
             }}
           >
             <CloseIcon />
@@ -747,9 +759,8 @@ const CourseViewer = () => {
             <>
               <div style={{
                 padding: '16px 48px 12px 16px',
-                fontSize: '0.925rem',
-                fontWeight: '600',
-                color: '#e2e8f0',
+                fontSize: 'clamp(0.8rem, 2vw, 0.925rem)',
+                fontWeight: '600', color: '#e2e8f0',
                 fontFamily: "'Inter', sans-serif",
                 borderBottom: '1px solid rgba(255,255,255,0.06)',
               }}>

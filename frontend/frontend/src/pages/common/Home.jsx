@@ -44,7 +44,7 @@ function Home() {
             Next-Gen Learning
           </Typography>
           <Typography variant="h1" sx={{ fontSize: { xs: '3rem', md: '5rem' }, fontWeight: 800, color: '#fff', mb: 3, letterSpacing: '-0.04em' }}>
-            Rk.learning. <span style={{ color: '#64ffda' }}>platform.</span>
+            Rk.learning.<span style={{ color: '#64ffda' }}>platform</span>
           </Typography>
           <Typography variant="h5" sx={{ color: 'rgba(255,255,255,0.6)', maxWidth: '700px', mx: 'auto', lineHeight: 1.6, mb: 6 }}>
             The definitive platform for professionals. Master complex concepts with structured paths, real-time analytics, and enterprise-grade security.

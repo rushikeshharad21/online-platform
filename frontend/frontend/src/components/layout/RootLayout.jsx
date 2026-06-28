@@ -118,7 +118,7 @@ function RootLayout() {
                   <Button
                     startIcon={<Login />}
                     onClick={() => navigate('/login')}
-                    sx={{ color: 'rgba(255,255,255,0.85)', '&:hover': { color: '#fff', background: 'rgba(255,255,255,0.08)' } }}
+                    sx={{ color: 'rgba(194, 13, 13, 0.85)', '&:hover': { color: '#ebe3e3c5', background: 'rgba(180, 33, 33, 0.08)' } }}
                   >
                     Sign in
                   </Button>

@@ -1,129 +1,129 @@
-import React from 'react';
+// src/App.jsx
+import React, { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { Box, CircularProgress } from '@mui/material';
 
-// =========================================================================
-// 🌐 1. DIRECTORY-ALIGNED IMPORTS (Matching your exact folder tree layout)
-// =========================================================================
+// ── Only RootLayout is eagerly loaded (needed immediately) ────
 import RootLayout from './components/layout/RootLayout';
 
-// Common Public Pages Folder
-import Home from './pages/common/Home';
-import Login from './pages/common/Login';
-import Register from './pages/common/Register';
+// ── Lazy loaded pages ─────────────────────────────────────────
+// Common
+const Home     = lazy(() => import('./pages/common/Home'));
+const Login    = lazy(() => import('./pages/common/Login'));
+const Register = lazy(() => import('./pages/common/Register'));
 
-// Core Features Implemented Pages
-import CreateCourse from "./pages/CreateCourse"; 
-import InstructorDashboard from "./pages/InstructorDashboard"; 
-import EditCourse from "./pages/EditCourse";
-import StudentDashboard from "./pages/StudentDashboard";
-import CourseViewer from "./pages/CourseViewer";
+// Instructor
+const InstructorDashboard   = lazy(() => import('./pages/InstructorDashboard'));
+const CreateCourse          = lazy(() => import('./pages/CreateCourse'));
+const EditCourse            = lazy(() => import('./pages/EditCourse'));
+const TestManager           = lazy(() => import('./pages/instructor/TestManager'));
+const CreateTest            = lazy(() => import('./pages/instructor/CreateTest'));
+const InstructorTestResults = lazy(() => import('./pages/instructor/InstructorTestResults'));
 
-// Remaining Placeholders
-const Checkout = () => <div style={{ padding: '24px' }}><h2>💳 Secure Checkout Window</h2></div>;
+// Student
+const StudentDashboard = lazy(() => import('./pages/StudentDashboard'));
+const CourseViewer     = lazy(() => import('./pages/CourseViewer'));
+const StudentTestList  = lazy(() => import('./pages/student/StudentTestList'));
+const AttemptTest      = lazy(() => import('./pages/student/AttemptTest'));
+const StudentResult    = lazy(() => import('./pages/student/StudentResult'));
 
-// Wildcard Error Handling Viewport
-const NotFound = () => <div style={{ padding: '40px', textAlign: 'center' }}><h2>404 - Page Not Found</h2></div>;
+// Placeholders
+const Checkout = lazy(() => import('./pages/common/Checkout'));
 
+// ── Page loader shown during lazy load ────────────────────────
+const PageLoader = () => (
+  <Box sx={{
+    minHeight: '100vh',
+    bgcolor: '#07111f',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }}>
+    <CircularProgress sx={{ color: '#4f8ef7' }} />
+  </Box>
+);
 
-// =========================================================================
-// 🔒 2. ROLE-BASED ACCESS CONTROL GUARDS (Using Layout Outlets)
-// =========================================================================
+// ── Suspense wrapper applied at layout level ──────────────────
+const SuspenseLayout = () => (
+  <Suspense fallback={<PageLoader />}>
+    <Outlet />
+  </Suspense>
+);
+
+// ── Role guard ────────────────────────────────────────────────
 const ProtectedLayout = ({ allowedRoles }) => {
- // 1. Grab the current live state from Redux slice storage
   const { user: reduxUser } = useSelector((state) => state.auth || {});
 
-  // 2. Persistent Fallback: Check localStorage if a page refresh cleared Redux state
   const localUserString = localStorage.getItem('user');
-  const storedUser = localUserString ? JSON.parse(localUserString) : null;
+  const storedUser      = localUserString ? JSON.parse(localUserString) : null;
+  const currentUser     = reduxUser || storedUser;
 
-  // Resolve active user context state
-  const currentUser = reduxUser || storedUser;
-
-  // Guard Clause 1: If user context data is empty, force route redirection back to login instantly
-  if (!currentUser) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Guard Clause 2: If the profile's role string fails the validation array list, block entry
-  if (allowedRoles && !allowedRoles.includes(currentUser.role)) {
-    return <Navigate to="/" replace />;
-  }
-
-  // If both security barriers clear, securely mount the matching sub-page index
+  if (!currentUser)                                              return <Navigate to="/login" replace />;
+  if (allowedRoles && !allowedRoles.includes(currentUser.role)) return <Navigate to="/" replace />;
   return <Outlet />;
 };
 
+// ── Not found ─────────────────────────────────────────────────
+const NotFound = () => (
+  <Box sx={{
+    minHeight: '100vh', bgcolor: '#07111f',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+  }}>
+    <Box sx={{ textAlign: 'center' }}>
+      <Box sx={{ fontSize: '72px', fontWeight: 800, color: 'rgba(255,255,255,0.08)', lineHeight: 1 }}>404</Box>
+      <Box sx={{ fontSize: '16px', color: 'rgba(200,215,240,0.5)', mt: 1 }}>Page not found</Box>
+    </Box>
+  </Box>
+);
 
-// =========================================================================
-// 🗺️ 3. CENTRAL DATA ROUTER ARCHITECTURE (createBrowserRouter)
-// =========================================================================
+// ── Router ────────────────────────────────────────────────────
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <RootLayout />, // Wraps every single page down below inside your responsive MUI navbar shell
+    element: <RootLayout />,
     children: [
-      // 🟢 PUBLIC COMMON TRACK ROUTES
       {
-        index: true,
-        element: <Home />,
-      },
-      {
-        path: 'login',
-        element: <Login />,
-      },
-      {
-        path: 'register',
-        element: <Register />,
-      },
-
-      // 🔵 PROTECTED STUDENT TRACK ROUTES (pages/student/)
-      {
-        element: <ProtectedLayout allowedRoles={['student', 'admin']} />,
+        // Suspense boundary wraps all children
+        element: <SuspenseLayout />,
         children: [
-          {
-            path: 'dashboard',
-            element: <StudentDashboard />,
-          },
-          {
-            path: 'course/:courseId',
-            element: <CourseViewer />,
-          },
-          {
-            path: 'checkout',
-            element: <Checkout />,
-          },
-        ],
-      },
 
-      // 🔴 PROTECTED INSTRUCTOR TRACK ROUTES (pages/instructor/)
-      {
-        path: 'instructor',
-        element: <ProtectedLayout allowedRoles={['instructor', 'admin']} />,
-        children: [
-          {
-            path: 'dashboard',
-            element: <InstructorDashboard />, 
-          },
-          {
-            path: 'create-course',
-            element: <CreateCourse />,
-          },
-          {
-            path: 'edit-course/:courseId',
-            element: <EditCourse />,
-          },
-        ],
-      },
+          // PUBLIC
+          { index: true,      element: <Home />     },
+          { path: 'login',    element: <Login />    },
+          { path: 'register', element: <Register /> },
 
-      // 🟡 FALLBACK UNMAPPED ACTIONS
-      {
-        path: '404',
-        element: <NotFound />,
-      },
-      {
-        path: '*',
-        element: <Navigate to="/404" replace />,
+          // STUDENT
+          {
+            element: <ProtectedLayout allowedRoles={['student', 'admin']} />,
+            children: [
+              { path: 'dashboard',                           element: <StudentDashboard /> },
+              { path: 'course/:courseId',                    element: <CourseViewer />     },
+              { path: 'checkout',                            element: <Checkout />         },
+              { path: 'student/courses/:courseId/tests',     element: <StudentTestList />  },
+              { path: 'student/tests/:testId/attempt',       element: <AttemptTest />      },
+              { path: 'student/tests/:testId/result',        element: <StudentResult />    },
+            ],
+          },
+
+          // INSTRUCTOR
+          {
+            path: 'instructor',
+            element: <ProtectedLayout allowedRoles={['instructor', 'admin']} />,
+            children: [
+              { path: 'dashboard',                           element: <InstructorDashboard />   },
+              { path: 'create-course',                       element: <CreateCourse />          },
+              { path: 'edit-course/:courseId',               element: <EditCourse />            },
+              { path: 'courses/:courseId/tests',             element: <TestManager />           },
+              { path: 'courses/:courseId/tests/create',      element: <CreateTest />            },
+              { path: 'tests/:testId/results',               element: <InstructorTestResults /> },
+            ],
+          },
+
+          // FALLBACK
+          { path: '404', element: <NotFound /> },
+          { path: '*',   element: <Navigate to="/404" replace /> },
+        ],
       },
     ],
   },

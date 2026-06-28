@@ -9,7 +9,7 @@ import authRoutes from './routes/authRoutes.js';
 import courseRoutes from './routes/courseRoutes.js'; 
 import studyMaterialRoutes from './routes/studyMaterialRoutes.js';
 import globalErrorHandler from './middlewares/errorMiddleware.js';
-
+import testRoutes from './routes/testRoutes.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -35,7 +35,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes); 
 app.use('/api/study-materials', studyMaterialRoutes);
-
+app.use('/api/tests', testRoutes);
 // स्थानिक फाईल्स दाखवण्यासाठी static folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
 
