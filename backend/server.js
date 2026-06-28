@@ -9,6 +9,8 @@ import authRoutes from './routes/authRoutes.js';
 import courseRoutes from './routes/courseRoutes.js'; 
 import studyMaterialRoutes from './routes/studyMaterialRoutes.js';
 import globalErrorHandler from './middlewares/errorMiddleware.js';
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import testRoutes from './routes/testRoutes.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,7 +32,7 @@ app.use(
 app.use(express.json({ limit: '10kb' })); 
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
-
+app.use(helmet());
 // ॲप राउट्स (App Routes)
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes); 
@@ -38,7 +40,12 @@ app.use('/api/study-materials', studyMaterialRoutes);
 app.use('/api/tests', testRoutes);
 // स्थानिक फाईल्स दाखवण्यासाठी static folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
 
+app.use(limiter);
 // ग्लोबल एरर हँडलर पाईपलाईन
 app.use(globalErrorHandler);
 
