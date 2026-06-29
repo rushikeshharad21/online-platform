@@ -2,7 +2,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import apiClient from '../../utils/apiClient';
 
-const BASE = '/api/tests';
+const BASE = '/tests';
 
 /* ── Thunks ──────────────────────────────────────────────────── */
 // FIX: apiClient handles Authorization header — no getState() token extraction needed

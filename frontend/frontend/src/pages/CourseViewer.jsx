@@ -409,7 +409,7 @@ const CourseViewer = () => {
   // already fetches the course. Merged into one function to avoid double request.
   const checkEnrollmentAndMaterials = useCallback(async () => {
     try {
-      const courseRes  = await apiClient.get(`/api/courses/${courseId}`);
+      const courseRes  = await apiClient.get(`/courses/${courseId}`);
       const courseData = courseRes.data.course;
       if (courseRes.data.success) setCourse(courseData);
 
@@ -422,14 +422,14 @@ const CourseViewer = () => {
           setEnrolled(true);
           setMaterialsLocked(false);
         } else {
-          const enrolledRes = await apiClient.get(`/api/courses/student/enrolled`);
+          const enrolledRes = await apiClient.get(`/courses/student/enrolled`);
           // FIX: removed manual Authorization header — apiClient interceptor handles it
           if (enrolledRes.data.success) {
             setEnrolled(enrolledRes.data.courses.some(c => c._id === courseId));
           }
         }
 
-        const materialsRes = await apiClient.get(`/api/study-materials/course/${courseId}`);
+        const materialsRes = await apiClient.get(`/study-materials/course/${courseId}`);
         if (materialsRes.data.success) {
           setMaterials(materialsRes.data.materials || []);
           setMaterialsLocked(false);
@@ -463,7 +463,7 @@ const CourseViewer = () => {
     }
     try {
       setEnrollLoading(true);
-      const response = await apiClient.post(`/api/courses/${courseId}/enroll`, {});
+      const response = await apiClient.post(`/courses/${courseId}/enroll`, {});
       // FIX: removed manual Authorization header — apiClient handles it
       if (response.data.success) {
         setEnrolled(true);

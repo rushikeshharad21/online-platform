@@ -189,7 +189,7 @@ const EditCourse = () => {
   const fetchCourseDetails = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiClient.get(`/api/courses/${courseId}`);
+      const res = await apiClient.get(`/courses/${courseId}`);
       if (res.data.success) setCourseData(res.data.course);
     } catch (err) {
       showAlert(err.response?.data?.message || 'Error fetching course details', 'error');
@@ -201,7 +201,7 @@ const EditCourse = () => {
   const fetchStudyMaterials = useCallback(async () => {
     try {
       setMaterialsLoading(true);
-      const res = await apiClient.get(`/api/study-materials/course/${courseId}`);
+      const res = await apiClient.get(`/study-materials/course/${courseId}`);
       if (res.data.success) setMaterials(res.data.materials);
     } catch (err) {
       console.error('Error fetching materials:', err);
@@ -227,7 +227,7 @@ const EditCourse = () => {
     try {
       setSubmitting(true);
       const { rating: _omit, ...rest } = courseData;
-      const res = await apiClient.put(`/api/courses/${courseId}`, { ...rest, price: Number(courseData.price) });
+      const res = await apiClient.put(`/courses/${courseId}`, { ...rest, price: Number(courseData.price) });
       if (res.data.success) showAlert('Course details updated successfully!');
     } catch (err) {
       showAlert(err.response?.data?.message || 'Error updating course details', 'error');
@@ -293,7 +293,7 @@ const EditCourse = () => {
     }
     try {
       setSubmitting(true);
-      const res = await apiClient.put(`/api/courses/${courseId}`, { curriculum: courseData.curriculum });
+      const res = await apiClient.put(`/courses/${courseId}`, { curriculum: courseData.curriculum });
       if (res.data.success) showAlert('Curriculum saved successfully!');
     } catch (err) {
       showAlert(err.response?.data?.message || 'Error saving curriculum', 'error');
@@ -329,7 +329,7 @@ const EditCourse = () => {
       formData.append('description', pdfDescription);
       formData.append('courseId',    courseId);
       // Override Content-Type for multipart — apiClient default is application/json
-      const res = await apiClient.post('/api/study-materials/upload', formData, {
+      const res = await apiClient.post('/study-materials/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       if (res.data.success) {
@@ -354,7 +354,7 @@ const EditCourse = () => {
     if (!editTitle.trim()) { showAlert('Title is required.', 'error'); return; }
     try {
       setUpdatingMetadata(true);
-      const res = await apiClient.put(`/api/study-materials/${editMaterial._id}`, { title: editTitle, description: editDescription });
+      const res = await apiClient.put(`/study-materials/${editMaterial._id}`, { title: editTitle, description: editDescription });
       if (res.data.success) { showAlert('Material updated.'); closeEditDialog(); fetchStudyMaterials(); }
     } catch (err) {
       showAlert(err.response?.data?.message || 'Error updating material', 'error');
@@ -370,7 +370,7 @@ const EditCourse = () => {
   const confirmDelete = async () => {
     setConfirmOpen(false);
     try {
-      const res = await apiClient.delete(`/api/study-materials/${pendingDeleteId}`);
+      const res = await apiClient.delete(`/study-materials/${pendingDeleteId}`);
       if (res.data.success) { showAlert('Material deleted.'); fetchStudyMaterials(); }
     } catch (err) {
       showAlert(err.response?.data?.message || 'Error deleting material', 'error');

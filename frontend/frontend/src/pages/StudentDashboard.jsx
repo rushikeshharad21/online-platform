@@ -40,8 +40,8 @@ const StudentDashboard = () => {
     setCatalogLoading(true);
 
 const [enrolledResult, allResult] = await Promise.allSettled([
-  apiClient.get('/api/courses/student/enrolled'),
-  apiClient.get('/api/courses'),
+  apiClient.get('/courses/student/enrolled'),
+  apiClient.get('/courses'),
 ]);
 
     if (enrolledResult.status === 'fulfilled' && enrolledResult.value.data.success)
