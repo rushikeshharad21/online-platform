@@ -384,7 +384,7 @@ function Home() {
               px: { xs: 2, sm: 0 },
             }}
           >
-            The definitive platform for professionals. Master complex concepts with
+            The definitive platform made by Rushikesh harad. Master complex concepts with
             structured paths, real-time analytics, and enterprise-grade security.
           </Typography>
 
