@@ -1,51 +1,58 @@
-import axios from 'axios';
+import apiClient from '../../utils/apiClient';
 
-const API_URL = 'http://localhost:5000/api/auth';
-
+// LOGIN
 const login = async (userData) => {
-  const response = await axios.post(`${API_URL}/login`, userData, {
-    headers: { 'Content-Type': 'application/json' },
-    withCredentials: true,
-  });
+  const response = await apiClient.post('/auth/login', userData);
 
-  // रिस्पॉन्समध्ये डेटा आहे का हे तपासा
-  if (response.data) {
-    // 🟢 'Expert' बदल: टोकनची खात्री करा. 
-    // बॅकएंड रिस्पॉन्समध्ये टोकन कोणत्या नावाने आहे (token/accessToken/jwt) 
-    // ते ओळखून ते वेगळे काढून सेव्ह करा.
-    const token = response.data.token || response.data.accessToken;
+  const data = response?.data;
 
-    if (token) {
-      // पूर्ण युजर ऑब्जेक्टमध्ये 'token' की जोडणे अत्यंत आवश्यक आहे
-      const userToStore = { ...response.data, token };
-      localStorage.setItem('user', JSON.stringify(userToStore));
-      return userToStore;
-    } else {
-      // जर टोकनच नसेल तर ही मोठी त्रुटी आहे
-      console.error("Login Error: टोकन रिस्पॉन्समध्ये सापडले नाही.");
-      throw new Error("No token received from server.");
-    }
+  if (!data) {
+    throw new Error("Invalid response from server.");
   }
+
+  const token = data.token || data.accessToken;
+
+  if (!token) {
+    throw new Error("No token received from server.");
+  }
+
+  const userToStore = {
+    ...data,
+    token,
+  };
+
+  localStorage.setItem('user', JSON.stringify(userToStore));
+
+  return userToStore;
 };
 
+// REGISTER
 const register = async (userData) => {
-  const response = await axios.post(`${API_URL}/register`, userData, {
-    headers: { 'Content-Type': 'application/json' },
-    withCredentials: true,
-  });
+  const response = await apiClient.post('/auth/register', userData);
 
-  if (response.data) {
-    const token = response.data.token || response.data.accessToken;
-    if (token) {
-      localStorage.setItem('user', JSON.stringify({ ...response.data, token }));
-    }
+  const data = response?.data;
+
+  if (!data) {
+    throw new Error("Invalid response from server.");
   }
-  return response.data;
+
+  const token = data.token || data.accessToken;
+
+  if (token) {
+    localStorage.setItem(
+      'user',
+      JSON.stringify({ ...data, token })
+    );
+  }
+
+  return data;
 };
 
+// LOGOUT
 const logout = () => {
   localStorage.removeItem('user');
 };
 
 const authService = { register, login, logout };
+
 export default authService;

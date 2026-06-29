@@ -1,61 +1,110 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import apiClient from "../../utils/apiClient"; // ✅ Adjust the path if needed
 
-const BASE_URL = 'http://localhost:5000/api/courses';
+// Create Course
+export const createNewCourse = createAsyncThunk(
+  'courses/create',
+  async (courseData, thunkAPI) => {
+    try {
+      const token = thunkAPI.getState().auth.user.token;
 
-export const createNewCourse = createAsyncThunk('courses/create', async (courseData, thunkAPI) => {
-  try {
-    const token = thunkAPI.getState().auth.user.token;
-    const response = await axios.post(`${BASE_URL}/create`, courseData, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      const response = await apiClient.post(
+        '/courses/create',
+        courseData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
   }
-});
+);
 
-export const fetchAllCourses = createAsyncThunk('courses/fetchAll', async (_, thunkAPI) => {
-  try {
-    const response = await axios.get(BASE_URL);
-    return response.data;
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.response?.data?.message || 'Error fetching courses');
+// Fetch All Courses
+export const fetchAllCourses = createAsyncThunk(
+  'courses/fetchAll',
+  async (_, thunkAPI) => {
+    try {
+      const response = await apiClient.get('/courses');
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || 'Error fetching courses'
+      );
+    }
   }
-});
+);
 
-export const fetchMyCourses = createAsyncThunk('courses/fetchMine', async (_, thunkAPI) => {
-  try {
-    const token = thunkAPI.getState().auth.user.token;
-    const response = await axios.get(`${BASE_URL}/my-courses`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    return thunkAPI.rejectWithValue(error.response?.data?.message || 'Error fetching your courses');
-  }
-});
+// Fetch My Courses
+export const fetchMyCourses = createAsyncThunk(
+  'courses/fetchMine',
+  async (_, thunkAPI) => {
+    try {
+      const token = thunkAPI.getState().auth.user.token;
 
-export const togglePublishStatus = createAsyncThunk('courses/togglePublish', async ({ courseId, isPublished }, thunkAPI) => {
-  try {
-    const token = thunkAPI.getState().auth.user.token;
-    const response = await axios.put(`${BASE_URL}/${courseId}`, { isPublished }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data.course;
-  } catch (error) {
-    return thunkAPI.rejectWithValue({
-      courseId,
-      // Revert to previous value on failure
-      isPublished: !isPublished,
-      message: error.response?.data?.message || 'Failed to update status',
-    });
+      const response = await apiClient.get(
+        '/courses/my-courses',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || 'Error fetching your courses'
+      );
+    }
   }
-});
+);
+
+// Toggle Publish Status
+export const togglePublishStatus = createAsyncThunk(
+  'courses/togglePublish',
+  async ({ courseId, isPublished }, thunkAPI) => {
+    try {
+      const token = thunkAPI.getState().auth.user.token;
+
+      const response = await apiClient.put(
+        `/courses/${courseId}`,
+        { isPublished },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return response.data.course;
+    } catch (error) {
+      return thunkAPI.rejectWithValue({
+        courseId,
+        isPublished: !isPublished,
+        message:
+          error.response?.data?.message || 'Failed to update status',
+      });
+    }
+  }
+);
 
 const courseSlice = createSlice({
   name: 'courses',
-  initialState: { courses: [], isLoading: false, isError: false, message: '' },
+  initialState: {
+    courses: [],
+    isLoading: false,
+    isError: false,
+    message: '',
+  },
+
   reducers: {
     resetCourseState: (state) => {
       state.isLoading = false;
@@ -63,65 +112,82 @@ const courseSlice = createSlice({
       state.message = '';
     },
   },
+
   extraReducers: (builder) => {
     builder
-      // ── fetchAllCourses ───────────────────────────────────────────
+
+      // Fetch All Courses
       .addCase(fetchAllCourses.pending, (state) => {
         state.isLoading = true;
         state.isError = false;
       })
+
       .addCase(fetchAllCourses.fulfilled, (state, action) => {
         state.isLoading = false;
         state.courses = Array.isArray(action.payload)
           ? action.payload
-          : (action.payload.courses || []);
+          : action.payload.courses || [];
       })
+
       .addCase(fetchAllCourses.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
       })
 
-      // ── fetchMyCourses ────────────────────────────────────────────
+      // Fetch My Courses
       .addCase(fetchMyCourses.pending, (state) => {
         state.isLoading = true;
         state.isError = false;
       })
+
       .addCase(fetchMyCourses.fulfilled, (state, action) => {
         state.isLoading = false;
         state.courses = Array.isArray(action.payload)
           ? action.payload
-          : (action.payload.courses || []);
+          : action.payload.courses || [];
       })
+
       .addCase(fetchMyCourses.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload;
       })
 
-      // ── togglePublishStatus ───────────────────────────────────────
-      // OPTIMISTIC UPDATE: flip the value immediately in .pending so the
-      // switch responds instantly without waiting for the API round-trip.
-      // .fulfilled confirms with the server's actual response.
-      // .rejected rolls back to the previous value so UI stays truthful.
+      // Toggle Publish
       .addCase(togglePublishStatus.pending, (state, action) => {
         const { courseId, isPublished } = action.meta.arg;
-        const course = state.courses.find(c => c._id === courseId);
+
+        const course = state.courses.find(
+          (c) => c._id === courseId
+        );
+
         if (course) {
-          // Flip immediately — this is what makes the toggle feel instant
           course.isPublished = isPublished;
         }
       })
+
       .addCase(togglePublishStatus.fulfilled, (state, action) => {
-        // Server confirmed — replace with authoritative data
-        const index = state.courses.findIndex(c => c._id === action.payload._id);
-        if (index !== -1) state.courses[index] = action.payload;
+        const index = state.courses.findIndex(
+          (c) => c._id === action.payload._id
+        );
+
+        if (index !== -1) {
+          state.courses[index] = action.payload;
+        }
       })
+
       .addCase(togglePublishStatus.rejected, (state, action) => {
-        // Roll back the optimistic flip
         const { courseId, isPublished } = action.payload;
-        const course = state.courses.find(c => c._id === courseId);
-        if (course) course.isPublished = isPublished;
+
+        const course = state.courses.find(
+          (c) => c._id === courseId
+        );
+
+        if (course) {
+          course.isPublished = isPublished;
+        }
+
         state.isError = true;
         state.message = action.payload.message;
       });
@@ -129,4 +195,5 @@ const courseSlice = createSlice({
 });
 
 export const { resetCourseState } = courseSlice.actions;
+
 export default courseSlice.reducer;

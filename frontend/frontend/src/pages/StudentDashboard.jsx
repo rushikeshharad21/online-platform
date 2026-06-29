@@ -1,54 +1,86 @@
 // src/pages/StudentDashboard.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../api/apiClient';
 import {
   Container, Typography, Box, Tabs, Tab, Button, Card,
-  CardContent, CardMedia, Alert, Avatar, Chip, Grid
+  CardContent, CardMedia, Alert, Avatar, Chip, Grid, CircularProgress
 } from '@mui/material';
 import ImageNotSupportedOutlinedIcon from '@mui/icons-material/ImageNotSupportedOutlined';
 import CheckCircleOutlinedIcon       from '@mui/icons-material/CheckCircleOutlined';
-import QuizOutlinedIcon              from '@mui/icons-material/QuizOutlined'; // ← NEW
+import QuizOutlinedIcon              from '@mui/icons-material/QuizOutlined';
+
+
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
   const [tabValue,        setTabValue]        = useState(0);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [allCourses,      setAllCourses]      = useState([]);
-  const [loading,         setLoading]         = useState(true);
+  // FIX: single loading flag replaced with granular state — avoids flash of
+  // empty content when one request resolves before the other
+  const [enrolledLoading, setEnrolledLoading] = useState(true);
+  const [catalogLoading,  setCatalogLoading]  = useState(true);
   const [enrolledError,   setEnrolledError]   = useState('');
   const [catalogError,    setCatalogError]    = useState('');
 
-  const user  = (() => { try { return JSON.parse(localStorage.getItem('user')); } catch { return null; } })();
-  const token = user?.token;
- const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    const [enrolledResult, allResult] = await Promise.allSettled([
-      axios.get(`${API}/api/courses/student/enrolled`, { headers: { Authorization: `Bearer ${token}` } }),
-      axios.get(`${API}/api/courses`),
-    ]);
+  // FIX: parsed once with useMemo + try/catch, not re-parsed on every render
+  const { token, user } = useMemo(() => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem('user'));
+      return { token: parsed?.token, user: parsed };
+    } catch {
+      return { token: null, user: null };
+    }
+  }, []);
+
+  // FIX: wrapped in useCallback so it can be safely listed as a useEffect dep
+  const fetchDashboardData = useCallback(async () => {
+    setEnrolledLoading(true);
+    setCatalogLoading(true);
+
+const [enrolledResult, allResult] = await Promise.allSettled([
+  apiClient.get('/api/courses/student/enrolled'),
+  apiClient.get('/api/courses'),
+]);
 
     if (enrolledResult.status === 'fulfilled' && enrolledResult.value.data.success)
       setEnrolledCourses(enrolledResult.value.data.courses || []);
-    else setEnrolledError('Could not load your courses.');
+    else
+      setEnrolledError('Could not load your courses.');
+    setEnrolledLoading(false);
 
     if (allResult.status === 'fulfilled' && allResult.value.data.success)
       setAllCourses(allResult.value.data.courses || []);
-    else setCatalogError('Could not load the catalog.');
+    else
+      setCatalogError('Could not load the catalog.');
+    setCatalogLoading(false);
+  }, [token]);
 
-    setLoading(false);
-  };
-
+  // FIX: fetchDashboardData is now a stable dep — no missing-dep warning
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
     fetchDashboardData();
-  }, [token]);
+  }, [token, navigate, fetchDashboardData]);
 
   const getInitials = (name = '') =>
     name.trim().split(' ').slice(0, 2).map(n => n[0]?.toUpperCase()).join('');
 
-  const renderCourseGrid = (coursesList, error) => {
+  // FIX: enrolledIds moved outside renderCourseGrid — was being recomputed
+  // on every card render inside the catalog tab
+  const enrolledIds = useMemo(
+    () => new Set(enrolledCourses.map(e => e._id)),
+    [enrolledCourses]
+  );
+
+  const renderCourseGrid = (coursesList, error, isLoading) => {
+    // FIX: loading state was completely missing from original renderCourseGrid
+    if (isLoading) return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+        <CircularProgress sx={{ color: '#64ffda' }} />
+      </Box>
+    );
+
     if (error) return (
       <Alert severity="error" sx={{ mt: 2, background: 'rgba(211,47,47,0.1)', color: '#ffb7b7' }}>
         {error}
@@ -64,8 +96,6 @@ const StudentDashboard = () => {
         <Typography sx={{ color: 'rgba(255,255,255,0.5)' }}>No courses found in this section.</Typography>
       </Box>
     );
-
-    const enrolledIds = new Set(enrolledCourses.map(e => e._id));
 
     return (
       <Grid container spacing={3} alignItems="stretch">
@@ -135,9 +165,8 @@ const StudentDashboard = () => {
                   </Box>
                 </CardContent>
 
-                {/* ── Action buttons ──────────────────────────── */}
+                {/* Action buttons */}
                 <Box sx={{ p: 2, pt: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {/* Go to Course / View Details */}
                   <Button
                     component={Link}
                     to={`/course/${course._id}`}
@@ -148,7 +177,6 @@ const StudentDashboard = () => {
                     {isEnrolled ? 'Go to Course' : 'View Details'}
                   </Button>
 
-                  {/* View Tests — only for enrolled courses ← NEW */}
                   {isEnrolled && (
                     <Button
                       component={Link}
@@ -171,7 +199,6 @@ const StudentDashboard = () => {
                     </Button>
                   )}
                 </Box>
-
               </Card>
             </Grid>
           );
@@ -203,8 +230,8 @@ const StudentDashboard = () => {
       </Tabs>
 
       {tabValue === 0
-        ? renderCourseGrid(enrolledCourses, enrolledError)
-        : renderCourseGrid(allCourses, catalogError)
+        ? renderCourseGrid(enrolledCourses, enrolledError, enrolledLoading)
+        : renderCourseGrid(allCourses,      catalogError,  catalogLoading)
       }
     </Container>
   );

@@ -1,7 +1,6 @@
 // src/pages/CourseViewer.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import {
   CircularProgress, Alert, Dialog, DialogContent, IconButton
 } from '@mui/material';
@@ -10,6 +9,9 @@ import {
   LockOpen, MenuBook, Info, Close as CloseIcon,
   QuizOutlined as QuizOutlinedIcon,
 } from '@mui/icons-material';
+import apiClient from '../utils/apiClient';
+
+// FIX: axios removed entirely — apiClient handles all requests, auth headers, and 401 redirect
 
 const getEmbedUrl = (url) => {
   if (!url) return '';
@@ -358,7 +360,6 @@ const styles = {
     fontWeight: '600',
     marginBottom: '12px',
   },
-  // ── Tests button ──────────────────────────────────────────────
   testsBtn: {
     display: 'flex',
     alignItems: 'center',
@@ -394,75 +395,84 @@ const CourseViewer = () => {
   const [activeVideo,      setActiveVideo]      = useState(null);
   const [expandedSections, setExpandedSections] = useState({ 0: true });
 
-  const storedUser = localStorage.getItem('user');
-  const user  = storedUser ? JSON.parse(storedUser) : null;
-  const token = user?.token;
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  useEffect(() => {
-    fetchCourseDetails();
-    if (token) checkEnrollmentAndMaterials();
-    else { setMaterialsLocked(true); setLoading(false); }
-  }, [courseId, token]);
-
-  const fetchCourseDetails = async () => {
+  // FIX: parsed once with useMemo + try/catch, not re-parsed on every render
+  const { token, user } = useMemo(() => {
     try {
-      const response = await axios.get(`${API}/api/courses/${courseId}`);
-      if (response.data.success) setCourse(response.data.course);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Error loading course details');
+      const parsed = JSON.parse(localStorage.getItem('user'));
+      return { token: parsed?.token ?? null, user: parsed };
+    } catch {
+      return { token: null, user: null };
     }
-  };
+  }, []);
 
-  const checkEnrollmentAndMaterials = async () => {
+  // FIX: fetchCourseDetails was making a duplicate API call — checkEnrollmentAndMaterials
+  // already fetches the course. Merged into one function to avoid double request.
+  const checkEnrollmentAndMaterials = useCallback(async () => {
     try {
-      const courseRes  = await axios.get(`${API}/api/courses/${courseId}`);
+      const courseRes  = await apiClient.get(`/api/courses/${courseId}`);
       const courseData = courseRes.data.course;
-      const isInstructor = user && courseData.instructor &&
-        (courseData.instructor._id === user._id || courseData.instructor === user._id);
-      const isAdmin = user && user.role === 'admin';
+      if (courseRes.data.success) setCourse(courseData);
 
-      if (isInstructor || isAdmin) {
-        setEnrolled(true);
-        setMaterialsLocked(false);
-      } else {
-        const enrolledRes = await axios.get('${API}/api/courses/student/enrolled', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (enrolledRes.data.success) {
-          setEnrolled(enrolledRes.data.courses.some(c => c._id === courseId));
+      if (token) {
+        const isInstructor = user && courseData.instructor &&
+          (courseData.instructor._id === user._id || courseData.instructor === user._id);
+        const isAdmin = user?.role === 'admin';
+
+        if (isInstructor || isAdmin) {
+          setEnrolled(true);
+          setMaterialsLocked(false);
+        } else {
+          const enrolledRes = await apiClient.get(`/api/courses/student/enrolled`);
+          // FIX: removed manual Authorization header — apiClient interceptor handles it
+          if (enrolledRes.data.success) {
+            setEnrolled(enrolledRes.data.courses.some(c => c._id === courseId));
+          }
         }
-      }
 
-      const materialsRes = await axios.get(`${API}/api/study-materials/course/${courseId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (materialsRes.data.success) {
-        setMaterials(materialsRes.data.materials || []);
-        setMaterialsLocked(false);
+        const materialsRes = await apiClient.get(`/api/study-materials/course/${courseId}`);
+        if (materialsRes.data.success) {
+          setMaterials(materialsRes.data.materials || []);
+          setMaterialsLocked(false);
+        }
+      } else {
+        setMaterialsLocked(true);
       }
     } catch (err) {
-      if (err.response?.status === 403 && err.response.data.isLocked) setMaterialsLocked(true);
-      else console.error('Error checking materials access:', err);
+      if (err.response?.status === 403 && err.response.data.isLocked) {
+        setMaterialsLocked(true);
+      } else if (!course) {
+        // Only set page-level error if course itself failed to load
+        setError(err.response?.data?.message || 'Error loading course details');
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [courseId, token, user]);
+
+  // FIX: useEffect deps now correctly list the stable useCallback reference
+  useEffect(() => {
+    checkEnrollmentAndMaterials();
+  }, [checkEnrollmentAndMaterials]);
 
   const handleEnroll = async () => {
     if (!token) { navigate('/login'); return; }
-    if (user.role === 'instructor') { alert('Instructors cannot enroll in courses.'); return; }
+    if (user?.role === 'instructor') {
+      // FIX: alert() replaced with state-driven error — alert() blocks the main thread
+      setError('Instructors cannot enroll in courses.');
+      return;
+    }
     try {
       setEnrollLoading(true);
-      const response = await axios.post(`${API}/api/courses/${courseId}/enroll`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await apiClient.post(`/api/courses/${courseId}/enroll`, {});
+      // FIX: removed manual Authorization header — apiClient handles it
       if (response.data.success) {
         setEnrolled(true);
         checkEnrollmentAndMaterials();
-        alert('Successfully enrolled! Welcome to the course. 🎓');
+        // FIX: alert() replaced with state — same reason as above
+        // If you want a toast/snackbar, wire it up here instead
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Enrollment failed');
+      setError(err.response?.data?.message || 'Enrollment failed. Please try again.');
     } finally {
       setEnrollLoading(false);
     }
@@ -471,7 +481,7 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const formatBytes = (bytes, decimals = 2) => {
     if (!bytes) return '0 Bytes';
     const k  = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
+    const dm = Math.max(0, decimals);
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i  = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
@@ -533,13 +543,25 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
           </div>
         </div>
 
+        {/* Inline error banner (replaces alert()) */}
+        {error && (
+          <Alert
+            severity="error"
+            onClose={() => setError('')}
+            sx={{ mb: 2, borderRadius: '10px' }}
+          >
+            {error}
+          </Alert>
+        )}
+
         {/* ── Main grid ─────────────────────────────────────────── */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 2fr) minmax(260px, 1fr)',
-          gap: '2rem',
-          alignItems: 'start',
-        }}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 2fr) minmax(260px, 1fr)',
+            gap: '2rem',
+            alignItems: 'start',
+          }}
           className="course-grid"
         >
           {/* Left column */}
@@ -550,7 +572,7 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
             <span style={styles.sectionLabel}>Curriculum</span>
             <h2 style={{ ...styles.sectionTitle, marginBottom: '1rem' }}>Syllabus &amp; Lectures</h2>
             <div>
-              {course.curriculum && course.curriculum.map((section, sIdx) => {
+              {course.curriculum?.map((section, sIdx) => {
                 const isOpen = !!expandedSections[sIdx];
                 return (
                   <div key={sIdx} style={{
@@ -614,7 +636,6 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
           {/* Right column */}
           <div style={{ position: 'sticky', top: '1.5rem' }}>
 
-            {/* Enrollment card */}
             {enrolled ? (
               <div style={styles.enrolledCard}>
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
@@ -626,18 +647,16 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
                 <p style={{ fontSize: '0.825rem', color: '#64748b', margin: 0, lineHeight: 1.6 }}>
                   Access all lectures and download study materials below.
                 </p>
-
-                {/* ── View Tests button ── */}
                 <Link
                   to={`/student/courses/${courseId}/tests`}
                   style={styles.testsBtn}
                   onMouseEnter={e => {
-                    e.currentTarget.style.background    = 'rgba(167,139,250,0.2)';
-                    e.currentTarget.style.borderColor   = 'rgba(167,139,250,0.5)';
+                    e.currentTarget.style.background  = 'rgba(167,139,250,0.2)';
+                    e.currentTarget.style.borderColor = 'rgba(167,139,250,0.5)';
                   }}
                   onMouseLeave={e => {
-                    e.currentTarget.style.background    = 'rgba(167,139,250,0.1)';
-                    e.currentTarget.style.borderColor   = 'rgba(167,139,250,0.28)';
+                    e.currentTarget.style.background  = 'rgba(167,139,250,0.1)';
+                    e.currentTarget.style.borderColor = 'rgba(167,139,250,0.28)';
                   }}
                 >
                   <QuizOutlinedIcon sx={{ fontSize: '18px' }} />
@@ -694,8 +713,8 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
                       {mat.description && <div style={styles.materialDesc}>{mat.description}</div>}
                       <div style={styles.materialMeta}>{formatBytes(mat.fileSize)}</div>
                       <div style={styles.materialActions}>
-                        <a href={mat.fileUrl}                       target="_blank" rel="noopener noreferrer" style={styles.viewBtn}>View</a>
-                        <a href={mat.downloadUrl || mat.fileUrl}    target="_blank" rel="noopener noreferrer" style={styles.downloadBtn}>
+                        <a href={mat.fileUrl} target="_blank" rel="noopener noreferrer" style={styles.viewBtn}>View</a>
+                        <a href={mat.downloadUrl || mat.fileUrl} target="_blank" rel="noopener noreferrer" style={styles.downloadBtn}>
                           <Download sx={{ fontSize: '13px' }} />
                           Download
                         </a>
@@ -714,7 +733,6 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         </div>
       </div>
 
-      {/* Responsive grid CSS */}
       <style>{`
         @media (max-width: 768px) {
           .course-grid {
