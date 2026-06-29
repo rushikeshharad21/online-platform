@@ -1,7 +1,7 @@
 // src/pages/StudentDashboard.jsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import apiClient from '../api/apiClient';
+import apiClient from '../utils/apiClient'
 import {
   Container, Typography, Box, Tabs, Tab, Button, Card,
   CardContent, CardMedia, Alert, Avatar, Chip, Grid, CircularProgress
