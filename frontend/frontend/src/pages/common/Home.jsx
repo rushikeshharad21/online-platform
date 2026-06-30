@@ -9,6 +9,7 @@ import {
 import { MenuBook, ElectricBolt, Security, ArrowForward } from '@mui/icons-material';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Lenis from 'lenis';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -39,6 +40,218 @@ const FEATURES = [
   },
 ];
 
+/* ── Reduced motion helper ───────────────────────────────────── */
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  window.matchMedia &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ── Lenis smooth scroll (lightweight, single instance) ──────── */
+const useLenis = () => {
+  useEffect(() => {
+    if (prefersReducedMotion()) return undefined;
+
+    const lenis = new Lenis({
+      duration: 1.1,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+    });
+
+    lenis.on('scroll', ScrollTrigger.update);
+
+    let rafId;
+    const raf = (time) => {
+      lenis.raf(time);
+      rafId = requestAnimationFrame(raf);
+    };
+    rafId = requestAnimationFrame(raf);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      lenis.destroy();
+    };
+  }, []);
+};
+
+/* ── Subtle magnetic hover for buttons ───────────────────────── */
+const useMagnetic = (strength = 14) => {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || prefersReducedMotion()) return undefined;
+
+    const handleMove = (e) => {
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      gsap.to(el, {
+        x: (x / rect.width) * strength,
+        y: (y / rect.height) * strength,
+        duration: 0.3,
+        ease: 'power2.out',
+      });
+    };
+
+    const handleLeave = () => {
+      gsap.to(el, { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1, 0.5)' });
+    };
+
+    el.addEventListener('mousemove', handleMove);
+    el.addEventListener('mouseleave', handleLeave);
+
+    return () => {
+      el.removeEventListener('mousemove', handleMove);
+      el.removeEventListener('mouseleave', handleLeave);
+    };
+  }, [strength]);
+
+  return ref;
+};
+
+/* ── Floating, mouse-reactive background blobs ───────────────── */
+const FloatingBackground = () => {
+  const wrapRef = useRef(null);
+  const blob1Ref = useRef(null);
+  const blob2Ref = useRef(null);
+  const blob3Ref = useRef(null);
+
+  useEffect(() => {
+    if (prefersReducedMotion()) return undefined;
+
+    const blobs = [blob1Ref.current, blob2Ref.current, blob3Ref.current];
+
+    // slow ambient drift, independent of mouse
+    const driftTweens = blobs.map((el, i) =>
+      gsap.to(el, {
+        x: `+=${20 + i * 8}`,
+        y: `+=${15 + i * 6}`,
+        duration: 8 + i * 2,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+      })
+    );
+
+    // gentle parallax toward cursor, max ~8px
+    const handleMove = (e) => {
+      const { innerWidth, innerHeight } = window;
+      const nx = e.clientX / innerWidth - 0.5;
+      const ny = e.clientY / innerHeight - 0.5;
+
+      blobs.forEach((el, i) => {
+        const depth = (i + 1) * 2.6; // max ~8px on outer blob
+        gsap.to(el, {
+          x: nx * depth,
+          y: ny * depth,
+          duration: 1,
+          ease: 'power2.out',
+          overwrite: 'auto',
+        });
+      });
+    };
+
+    window.addEventListener('mousemove', handleMove);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      driftTweens.forEach((t) => t.kill());
+    };
+  }, []);
+
+  return (
+    <Box
+      ref={wrapRef}
+      aria-hidden="true"
+      sx={{
+        position: 'absolute',
+        inset: 0,
+        overflow: 'hidden',
+        pointerEvents: 'none',
+        zIndex: 0,
+      }}
+    >
+      <Box
+        ref={blob1Ref}
+        sx={{
+          position: 'absolute', top: '8%', left: '12%',
+          width: { xs: 200, md: 360 }, height: { xs: 200, md: 360 },
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(100,255,218,0.08) 0%, transparent 70%)',
+          filter: 'blur(40px)',
+          willChange: 'transform',
+        }}
+      />
+      <Box
+        ref={blob2Ref}
+        sx={{
+          position: 'absolute', top: '35%', right: '8%',
+          width: { xs: 180, md: 320 }, height: { xs: 180, md: 320 },
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(79,142,247,0.07) 0%, transparent 70%)',
+          filter: 'blur(40px)',
+          willChange: 'transform',
+        }}
+      />
+      <Box
+        ref={blob3Ref}
+        sx={{
+          position: 'absolute', bottom: '5%', left: '40%',
+          width: { xs: 160, md: 280 }, height: { xs: 160, md: 280 },
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(167,139,250,0.07) 0%, transparent 70%)',
+          filter: 'blur(40px)',
+          willChange: 'transform',
+        }}
+      />
+    </Box>
+  );
+};
+
+/* ── Soft cursor glow, desktop-only ──────────────────────────── */
+const CursorGlow = () => {
+  const glowRef = useRef(null);
+
+  useEffect(() => {
+    const isTouch = window.matchMedia('(pointer: coarse)').matches;
+    if (isTouch || prefersReducedMotion()) return undefined;
+
+    const el = glowRef.current;
+    const handleMove = (e) => {
+      gsap.to(el, {
+        x: e.clientX,
+        y: e.clientY,
+        duration: 0.6,
+        ease: 'power3.out',
+      });
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    return () => window.removeEventListener('mousemove', handleMove);
+  }, []);
+
+  if (typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches) {
+    return null;
+  }
+
+  return (
+    <Box
+      ref={glowRef}
+      aria-hidden="true"
+      sx={{
+        position: 'fixed', top: 0, left: 0,
+        width: 420, height: 420,
+        marginLeft: '-210px', marginTop: '-210px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(100,255,218,0.05) 0%, rgba(167,139,250,0.04) 45%, transparent 70%)',
+        pointerEvents: 'none',
+        zIndex: 0,
+        willChange: 'transform',
+      }}
+    />
+  );
+};
+
 /* ── Animated Feature Card ───────────────────────────────────── */
 const FeatureCard = ({ icon: Icon, title, desc, accent, glow, delay, index }) => {
   const cardRef    = useRef(null);
@@ -55,6 +268,7 @@ const FeatureCard = ({ icon: Icon, title, desc, accent, glow, delay, index }) =>
     const desc  = descRef.current;
     const glow  = glowRef.current;
     const line  = lineRef.current;
+    const reduced = prefersReducedMotion();
 
     // ── Entry animation on scroll ─────────────────────────
     const tl = gsap.timeline({
@@ -65,30 +279,38 @@ const FeatureCard = ({ icon: Icon, title, desc, accent, glow, delay, index }) =>
       },
     });
 
-    tl.fromTo(card,
-      { y: 60, opacity: 0, scale: 0.94 },
-      { y: 0,  opacity: 1, scale: 1, duration: 0.7, delay, ease: 'power3.out' }
-    )
-    .fromTo(icon,
-      { scale: 0.6, opacity: 0, rotation: -15 },
-      { scale: 1,   opacity: 1, rotation: 0, duration: 0.5, ease: 'back.out(1.7)' },
-      '-=0.3'
-    )
-    .fromTo(line,
-      { scaleX: 0 },
-      { scaleX: 1, duration: 0.5, ease: 'power2.out', transformOrigin: 'left' },
-      '-=0.2'
-    )
-    .fromTo(title,
-      { y: 16, opacity: 0 },
-      { y: 0,  opacity: 1, duration: 0.4, ease: 'power2.out' },
-      '-=0.3'
-    )
-    .fromTo(desc,
-      { y: 12, opacity: 0 },
-      { y: 0,  opacity: 1, duration: 0.4, ease: 'power2.out' },
-      '-=0.2'
-    );
+    if (reduced) {
+      tl.set([card, icon, line, title, desc], { opacity: 1, y: 0, scale: 1, rotation: 0, scaleX: 1 });
+    } else {
+      tl.fromTo(card,
+        { y: 60, opacity: 0, scale: 0.94 },
+        { y: 0,  opacity: 1, scale: 1, duration: 0.7, delay, ease: 'power3.out' }
+      )
+      .fromTo(icon,
+        { scale: 0.6, opacity: 0, rotation: -15 },
+        { scale: 1,   opacity: 1, rotation: 0, duration: 0.5, ease: 'back.out(1.7)' },
+        '-=0.3'
+      )
+      .fromTo(line,
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.5, ease: 'power2.out', transformOrigin: 'left' },
+        '-=0.2'
+      )
+      .fromTo(title,
+        { y: 16, opacity: 0 },
+        { y: 0,  opacity: 1, duration: 0.4, ease: 'power2.out' },
+        '-=0.3'
+      )
+      .fromTo(desc,
+        { y: 12, opacity: 0 },
+        { y: 0,  opacity: 1, duration: 0.4, ease: 'power2.out' },
+        '-=0.2'
+      );
+    }
+
+    if (reduced) {
+      return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+    }
 
     // ── Hover: magnetic tilt ──────────────────────────────
     const handleMove = (e) => {
@@ -293,6 +515,133 @@ const FeatureCard = ({ icon: Icon, title, desc, accent, glow, delay, index }) =>
   );
 };
 
+/* ── Skills marquee ───────────────────────────────────────────── */
+const SKILLS = [
+  'React', 'JavaScript', 'TypeScript', 'HTML', 'CSS', 'Tailwind CSS',
+  'Material UI', 'Node.js', 'Express.js', 'MongoDB', 'REST API', 'JWT',
+  'Git', 'GitHub', 'Docker', 'Redis', 'GSAP',
+];
+
+const SkillsMarquee = () => {
+  const trackRef = useRef(null);
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track || prefersReducedMotion()) return undefined;
+
+    // track contains the list twice back-to-back; loop exactly -50%
+    const isMobile = window.innerWidth < 600;
+    const tween = gsap.to(track, {
+      xPercent: -50,
+      duration: isMobile ? 38 : 28,
+      ease: 'none',
+      repeat: -1,
+    });
+
+    const wrap = wrapRef.current;
+    const handleEnter = () => gsap.to(tween, { timeScale: 0, duration: 0.4, overwrite: true });
+    const handleLeave = () => gsap.to(tween, { timeScale: 1, duration: 0.6, overwrite: true });
+
+    wrap?.addEventListener('mouseenter', handleEnter);
+    wrap?.addEventListener('mouseleave', handleLeave);
+
+    return () => {
+      tween.kill();
+      wrap?.removeEventListener('mouseenter', handleEnter);
+      wrap?.removeEventListener('mouseleave', handleLeave);
+    };
+  }, []);
+
+  const renderItems = (keyPrefix) =>
+    SKILLS.map((skill) => (
+      <Box
+        key={`${keyPrefix}-${skill}`}
+        component="span"
+        sx={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}
+      >
+        <Typography
+          component="span"
+          sx={{
+            color: 'rgba(255,255,255,0.55)',
+            fontWeight: 600,
+            fontSize: { xs: '0.95rem', md: '1.1rem' },
+            letterSpacing: '0.02em',
+            whiteSpace: 'nowrap',
+            transition: 'color 0.3s ease',
+            '&:hover': { color: '#64ffda' },
+          }}
+        >
+          {skill}
+        </Typography>
+        <Box
+          component="span"
+          aria-hidden="true"
+          sx={{
+            width: 6, height: 6, borderRadius: '50%',
+            mx: { xs: 2.5, md: 4 },
+            background: '#64ffda',
+            boxShadow: '0 0 8px rgba(100,255,218,0.6)',
+            flexShrink: 0,
+          }}
+        />
+      </Box>
+    ));
+
+  return (
+    <Box
+      ref={wrapRef}
+      sx={{
+        mt: { xs: 8, sm: 10, md: 14 },
+        position: 'relative',
+        width: '100%',
+        overflow: 'hidden',
+        py: { xs: 2, md: 3 },
+        maskImage: 'linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%)',
+      }}
+    >
+      <Box
+        ref={trackRef}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          width: 'max-content',
+          willChange: 'transform',
+          flexWrap: { xs: 'wrap', sm: 'nowrap' },
+          '@media (prefers-reduced-motion: reduce)': {
+            width: '100%',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+          },
+        }}
+      >
+        {renderItems('a')}
+        <Box
+          aria-hidden="true"
+          sx={{
+            display: 'inline-flex',
+            '@media (prefers-reduced-motion: reduce)': { display: 'none' },
+          }}
+        >
+          {renderItems('b')}
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+/* ── Premium magnetic button wrapper ─────────────────────────── */
+const MagneticButton = React.forwardRef(({ children, ...props }, _forwardedRef) => {
+  const magRef = useMagnetic(10);
+  return (
+    <Button ref={magRef} {...props}>
+      {children}
+    </Button>
+  );
+});
+MagneticButton.displayName = 'MagneticButton';
+
 /* ── Page ────────────────────────────────────────────────────── */
 function Home() {
   const navigate = useNavigate();
@@ -303,8 +652,17 @@ function Home() {
   const subRef   = useRef(null);
   const btnRef   = useRef(null);
 
+  useLenis();
+
   // ── Hero entrance animation ─────────────────────────────────
   useEffect(() => {
+    if (prefersReducedMotion()) {
+      gsap.set([tagRef.current, titleRef.current, subRef.current, btnRef.current], {
+        opacity: 1, y: 0,
+      });
+      return;
+    }
+
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
     tl.fromTo(tagRef.current,
@@ -343,6 +701,9 @@ function Home() {
         zIndex: 0,
       },
     }}>
+      <CursorGlow />
+      <FloatingBackground />
+
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
 
         {/* ── Hero ─────────────────────────────────────────── */}
@@ -396,7 +757,7 @@ function Home() {
             alignItems="center"
           >
             {user ? (
-              <Button
+              <MagneticButton
                 variant="contained" size="large"
                 onClick={() => navigate(user.role === 'instructor' ? '/instructor/dashboard' : '/dashboard')}
                 sx={{
@@ -406,14 +767,18 @@ function Home() {
                   background: '#64ffda', color: '#050b16', fontWeight: 700,
                   boxShadow: '0 10px 25px rgba(100,255,218,0.2)',
                   width: { xs: '100%', sm: 'auto' },
-                  '&:hover': { background: '#4eedc4' },
+                  transition: 'box-shadow 0.3s ease, background 0.3s ease',
+                  '&:hover': {
+                    background: '#4eedc4',
+                    boxShadow: '0 14px 32px rgba(100,255,218,0.32)',
+                  },
                 }}
               >
                 Access Dashboard
-              </Button>
+              </MagneticButton>
             ) : (
               <>
-                <Button
+                <MagneticButton
                   variant="contained" size="large"
                   onClick={() => navigate('/login')}
                   sx={{
@@ -421,12 +786,16 @@ function Home() {
                     background: '#64ffda', color: '#050b16', fontWeight: 700,
                     fontSize: { xs: '1rem', sm: '1.1rem' },
                     width: { xs: '100%', sm: 'auto' },
-                    '&:hover': { background: '#4eedc4' },
+                    transition: 'box-shadow 0.3s ease, background 0.3s ease',
+                    '&:hover': {
+                      background: '#4eedc4',
+                      boxShadow: '0 14px 32px rgba(100,255,218,0.32)',
+                    },
                   }}
                 >
                   Get Started
-                </Button>
-                <Button
+                </MagneticButton>
+                <MagneticButton
                   variant="outlined" size="large"
                   onClick={() => navigate('/register')}
                   endIcon={<ArrowForward />}
@@ -435,6 +804,7 @@ function Home() {
                     color: '#fff', borderColor: 'rgba(255,255,255,0.2)',
                     fontSize: { xs: '1rem', sm: '1.1rem' },
                     width: { xs: '100%', sm: 'auto' },
+                    transition: 'border-color 0.3s ease, background 0.3s ease',
                     '&:hover': {
                       borderColor: 'rgba(255,255,255,0.45)',
                       background: 'rgba(255,255,255,0.05)',
@@ -442,7 +812,7 @@ function Home() {
                   }}
                 >
                   Explore Programs
-                </Button>
+                </MagneticButton>
               </>
             )}
           </Stack>
@@ -456,6 +826,9 @@ function Home() {
             </Grid>
           ))}
         </Grid>
+
+        {/* ── Skills marquee ─────────────────────────────────── */}
+        <SkillsMarquee />
 
       </Container>
     </Box>
