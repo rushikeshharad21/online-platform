@@ -515,6 +515,308 @@ const FeatureCard = ({ icon: Icon, title, desc, accent, glow, delay, index }) =>
   );
 };
 
+/* ── Meet the Creator section ────────────────────────────────── */
+const CREATOR_NAME = 'Rushikesh Harad';
+const CREATOR_DESC =
+  'Passionate Full Stack Developer focused on building scalable web applications, modern user experiences, and industry-level software solutions.';
+// TODO: replace with the real asset path once the image is uploaded
+const CREATOR_IMAGE_SRC = '/assets/rushi.jpeg';
+
+const MeetTheCreator = () => {
+  const sectionRef = useRef(null);
+  const headingRef = useRef(null);
+  const imgWrapRef = useRef(null);
+  const ringRef = useRef(null);
+  const nameRef = useRef(null);
+  const descRef = useRef(null);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    const heading = headingRef.current;
+    const imgWrap = imgWrapRef.current;
+    const ring = ringRef.current;
+    const name = nameRef.current;
+    const desc = descRef.current;
+    const reduced = prefersReducedMotion();
+
+    let floatTween;
+    let pulseTween;
+
+    const tl = gsap.timeline({
+      scrollTrigger: { trigger: section, start: 'top 85%', once: true },
+    });
+
+    if (reduced) {
+      tl.set([heading, imgWrap, ring, name, desc], { opacity: 1, scale: 1, y: 0, filter: 'blur(0px)', rotation: 0 });
+    } else {
+      // 1. heading chars, already split into spans in render
+      tl.fromTo(
+        heading.querySelectorAll('span'),
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, duration: 0.4, stagger: 0.02, ease: 'power2.out' }
+      )
+        // 2. image entrance
+        .fromTo(
+          imgWrap,
+          { opacity: 0, scale: 0.6, rotation: 8, filter: 'blur(15px)' },
+          { opacity: 1, scale: 1, rotation: 0, filter: 'blur(0px)', duration: 1, ease: 'power4.out' },
+          '-=0.1'
+        )
+        // ring draws in
+        .fromTo(
+          ring,
+          { opacity: 0, rotation: -90, scale: 0.85 },
+          { opacity: 1, rotation: 0, scale: 1, duration: 0.9, ease: 'power3.out' },
+          '-=0.7'
+        )
+        // 3. name mask reveal
+        .fromTo(
+          name.querySelectorAll('span'),
+          { opacity: 0, y: 24, rotateX: 40 },
+          { opacity: 1, y: 0, rotateX: 0, duration: 0.5, stagger: 0.03, ease: 'power3.out' },
+          '-=0.3'
+        )
+        // 4. description fade up
+        .fromTo(desc, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, '-=0.2');
+
+      // continuous gentle float
+      floatTween = gsap.to(imgWrap, {
+        y: 6,
+        duration: 4.5,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+      });
+
+      // soft periodic ring pulse
+      pulseTween = gsap.to(ring, {
+        scale: 1.04,
+        opacity: 0.85,
+        duration: 1.6,
+        repeat: -1,
+        yoyo: true,
+        repeatDelay: 2.2,
+        ease: 'sine.inOut',
+      });
+
+      // mouse-reactive tilt, capped
+      const handleMove = (e) => {
+        const rect = imgWrap.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = (e.clientX - cx) / (rect.width / 2);
+        const dy = (e.clientY - cy) / (rect.height / 2);
+
+        gsap.to(imgWrap, {
+          rotateY: dx * 6,
+          rotateX: -dy * 6,
+          x: dx * 5,
+          duration: 0.5,
+          ease: 'power2.out',
+          transformPerspective: 700,
+        });
+      };
+
+      const handleLeave = () => {
+        gsap.to(imgWrap, { rotateY: 0, rotateX: 0, x: 0, duration: 0.6, ease: 'elastic.out(1, 0.6)' });
+      };
+
+      const handleEnter = () => {
+        gsap.to(imgWrap, { scale: 1.05, duration: 0.4, ease: 'power2.out' });
+        gsap.to(ring, { opacity: 1, filter: 'brightness(1.3)', duration: 0.4 });
+      };
+
+      const handleHoverLeave = () => {
+        gsap.to(imgWrap, { scale: 1, duration: 0.5, ease: 'power2.out' });
+        gsap.to(ring, { filter: 'brightness(1)', duration: 0.5 });
+      };
+
+      section.addEventListener('mousemove', handleMove);
+      imgWrap.addEventListener('mouseenter', handleEnter);
+      imgWrap.addEventListener('mouseleave', () => {
+        handleLeave();
+        handleHoverLeave();
+      });
+
+      return () => {
+        floatTween?.kill();
+        pulseTween?.kill();
+        section.removeEventListener('mousemove', handleMove);
+        ScrollTrigger.getAll().forEach((t) => t.kill());
+      };
+    }
+
+    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
+  }, []);
+
+  return (
+    <Box
+      ref={sectionRef}
+      sx={{
+        position: 'relative',
+        textAlign: 'center',
+        mt: { xs: 8, sm: 10, md: 14 },
+        mb: { xs: 6, sm: 8, md: 10 },
+        py: { xs: 4, md: 6 },
+      }}
+    >
+      {/* decorative background */}
+      <Box
+        aria-hidden="true"
+        sx={{
+          position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
+          background: 'radial-gradient(circle at 50% 35%, rgba(100,255,218,0.06) 0%, transparent 60%)',
+          filter: 'blur(30px)',
+        }}
+      />
+
+      <Box sx={{ position: 'relative', zIndex: 1 }}>
+        {/* heading */}
+        <Typography
+          ref={headingRef}
+          variant="overline"
+          sx={{
+            display: 'block',
+            color: '#64ffda',
+            letterSpacing: '0.35em',
+            fontWeight: 700,
+            fontSize: { xs: '10px', sm: '12px' },
+            mb: { xs: 4, md: 5 },
+          }}
+        >
+          {'MEET THE CREATOR'.split('').map((ch, i) => (
+            <span key={i} style={{ display: 'inline-block' }}>
+              {ch === ' ' ? '\u00A0' : ch}
+            </span>
+          ))}
+        </Typography>
+
+        {/* image + ring + glow */}
+        <Box
+          sx={{
+            position: 'relative',
+            width: { xs: 140, sm: 170, md: 200 },
+            height: { xs: 140, sm: 170, md: 200 },
+            mx: 'auto',
+            mb: { xs: 4, md: 5 },
+          }}
+        >
+          {/* glow behind image */}
+          <Box
+            aria-hidden="true"
+            sx={{
+              position: 'absolute', inset: '-30px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(100,255,218,0.18) 0%, transparent 70%)',
+              filter: 'blur(20px)',
+              zIndex: 0,
+            }}
+          />
+
+          {/* slow orbit dots */}
+          <Box
+            aria-hidden="true"
+            sx={{
+              position: 'absolute', inset: '-18px',
+              borderRadius: '50%',
+              border: '1px dashed rgba(100,255,218,0.15)',
+              zIndex: 0,
+              animation: prefersReducedMotion() ? 'none' : 'rk-orbit-spin 40s linear infinite',
+              '@keyframes rk-orbit-spin': {
+                from: { transform: 'rotate(0deg)' },
+                to: { transform: 'rotate(360deg)' },
+              },
+            }}
+          />
+
+          {/* animated gradient ring */}
+          <Box
+            ref={ringRef}
+            aria-hidden="true"
+            sx={{
+              position: 'absolute', inset: '-8px',
+              borderRadius: '50%',
+              padding: '3px',
+              background: 'conic-gradient(from 0deg, #64ffda, #4f8ef7, #a78bfa, #64ffda)',
+              WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+              WebkitMaskComposite: 'xor',
+              maskComposite: 'exclude',
+              zIndex: 1,
+            }}
+          />
+
+          {/* circular image, floats + tilts */}
+          <Box
+            ref={imgWrapRef}
+            sx={{
+              position: 'relative',
+              zIndex: 2,
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              border: '1px solid rgba(255,255,255,0.12)',
+              boxShadow: '0 20px 45px rgba(0,0,0,0.45)',
+              transformStyle: 'preserve-3d',
+              willChange: 'transform',
+              background: 'rgba(16,28,45,0.65)',
+            }}
+          >
+            <Box
+              component="img"
+              src={CREATOR_IMAGE_SRC}
+              alt={CREATOR_NAME}
+              loading="lazy"
+              sx={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block',
+              }}
+            />
+          </Box>
+        </Box>
+
+        {/* name */}
+        <Typography
+          ref={nameRef}
+          variant="h3"
+          sx={{
+            color: '#fff',
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
+            fontSize: { xs: '1.5rem', sm: '1.9rem', md: '2.3rem' },
+            mb: 2,
+            perspective: '600px',
+          }}
+        >
+          {CREATOR_NAME.split('').map((ch, i) => (
+            <span key={i} style={{ display: 'inline-block' }}>
+              {ch === ' ' ? '\u00A0' : ch}
+            </span>
+          ))}
+        </Typography>
+
+        {/* description */}
+        <Typography
+          ref={descRef}
+          variant="body1"
+          sx={{
+            color: 'rgba(255,255,255,0.6)',
+            maxWidth: '560px',
+            mx: 'auto',
+            lineHeight: 1.8,
+            fontSize: { xs: '0.9rem', md: '1rem' },
+            px: { xs: 2, sm: 0 },
+          }}
+        >
+          {CREATOR_DESC}
+        </Typography>
+      </Box>
+    </Box>
+  );
+};
+
 /* ── Skills marquee ───────────────────────────────────────────── */
 const SKILLS = [
   'React', 'JavaScript', 'TypeScript', 'HTML', 'CSS', 'Tailwind CSS',
@@ -826,6 +1128,9 @@ function Home() {
             </Grid>
           ))}
         </Grid>
+
+        {/* ── Meet the Creator ───────────────────────────────── */}
+        <MeetTheCreator />
 
         {/* ── Skills marquee ─────────────────────────────────── */}
         <SkillsMarquee />
