@@ -526,6 +526,7 @@ const CREATOR_IMAGE_SRC = creatorPhoto;
 const MeetTheCreator = () => {
   const sectionRef = useRef(null);
   const headingRef = useRef(null);
+  const groupRef = useRef(null);
   const imgWrapRef = useRef(null);
   const ringRef = useRef(null);
   const nameRef = useRef(null);
@@ -534,6 +535,7 @@ const MeetTheCreator = () => {
   useEffect(() => {
     const section = sectionRef.current;
     const heading = headingRef.current;
+    const group = groupRef.current;
     const imgWrap = imgWrapRef.current;
     const ring = ringRef.current;
     const name = nameRef.current;
@@ -580,8 +582,8 @@ const MeetTheCreator = () => {
         // 4. description fade up
         .fromTo(desc, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, '-=0.2');
 
-      // continuous gentle float
-      floatTween = gsap.to(imgWrap, {
+      // continuous gentle float — moves ring + photo together
+      floatTween = gsap.to(group, {
         y: 6,
         duration: 4.5,
         repeat: -1,
@@ -600,15 +602,15 @@ const MeetTheCreator = () => {
         ease: 'sine.inOut',
       });
 
-      // mouse-reactive tilt, capped
+      // mouse-reactive tilt, capped — moves ring + photo together
       const handleMove = (e) => {
-        const rect = imgWrap.getBoundingClientRect();
+        const rect = group.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
         const dx = (e.clientX - cx) / (rect.width / 2);
         const dy = (e.clientY - cy) / (rect.height / 2);
 
-        gsap.to(imgWrap, {
+        gsap.to(group, {
           rotateY: dx * 6,
           rotateX: -dy * 6,
           x: dx * 5,
@@ -619,22 +621,22 @@ const MeetTheCreator = () => {
       };
 
       const handleLeave = () => {
-        gsap.to(imgWrap, { rotateY: 0, rotateX: 0, x: 0, duration: 0.6, ease: 'elastic.out(1, 0.6)' });
+        gsap.to(group, { rotateY: 0, rotateX: 0, x: 0, duration: 0.6, ease: 'elastic.out(1, 0.6)' });
       };
 
       const handleEnter = () => {
-        gsap.to(imgWrap, { scale: 1.05, duration: 0.4, ease: 'power2.out' });
+        gsap.to(group, { scale: 1.05, duration: 0.4, ease: 'power2.out' });
         gsap.to(ring, { opacity: 1, filter: 'brightness(1.3)', duration: 0.4 });
       };
 
       const handleHoverLeave = () => {
-        gsap.to(imgWrap, { scale: 1, duration: 0.5, ease: 'power2.out' });
+        gsap.to(group, { scale: 1, duration: 0.5, ease: 'power2.out' });
         gsap.to(ring, { filter: 'brightness(1)', duration: 0.5 });
       };
 
       section.addEventListener('mousemove', handleMove);
-      imgWrap.addEventListener('mouseenter', handleEnter);
-      imgWrap.addEventListener('mouseleave', () => {
+      group.addEventListener('mouseenter', handleEnter);
+      group.addEventListener('mouseleave', () => {
         handleLeave();
         handleHoverLeave();
       });
@@ -730,51 +732,60 @@ const MeetTheCreator = () => {
             }}
           />
 
-          {/* animated gradient ring */}
+          {/* shared transform group: ring + photo move together */}
           <Box
-            ref={ringRef}
-            aria-hidden="true"
+            ref={groupRef}
             sx={{
-              position: 'absolute', inset: '-8px',
-              borderRadius: '50%',
-              padding: '3px',
-              background: 'conic-gradient(from 0deg, #64ffda, #4f8ef7, #a78bfa, #64ffda)',
-              WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
-              WebkitMaskComposite: 'xor',
-              maskComposite: 'exclude',
-              zIndex: 1,
-            }}
-          />
-
-          {/* circular image, floats + tilts */}
-          <Box
-            ref={imgWrapRef}
-            sx={{
-              position: 'relative',
-              zIndex: 2,
-              width: '100%',
-              height: '100%',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              border: '1px solid rgba(255,255,255,0.12)',
-              boxShadow: '0 20px 45px rgba(0,0,0,0.45)',
+              position: 'absolute',
+              inset: 0,
               transformStyle: 'preserve-3d',
               willChange: 'transform',
-              background: 'rgba(16,28,45,0.65)',
             }}
           >
+            {/* animated gradient ring */}
             <Box
-              component="img"
-              src={CREATOR_IMAGE_SRC}
-              alt={CREATOR_NAME}
-              loading="lazy"
+              ref={ringRef}
+              aria-hidden="true"
               sx={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                display: 'block',
+                position: 'absolute', inset: '-8px',
+                borderRadius: '50%',
+                padding: '3px',
+                background: 'conic-gradient(from 0deg, #64ffda, #4f8ef7, #a78bfa, #64ffda)',
+                WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+                WebkitMaskComposite: 'xor',
+                maskComposite: 'exclude',
+                zIndex: 1,
               }}
             />
+
+            {/* circular image */}
+            <Box
+              ref={imgWrapRef}
+              sx={{
+                position: 'relative',
+                zIndex: 2,
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '1px solid rgba(255,255,255,0.12)',
+                boxShadow: '0 20px 45px rgba(0,0,0,0.45)',
+                background: 'rgba(16,28,45,0.65)',
+              }}
+            >
+              <Box
+                component="img"
+                src={CREATOR_IMAGE_SRC}
+                alt={CREATOR_NAME}
+                loading="lazy"
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
+                }}
+              />
+            </Box>
           </Box>
         </Box>
 
