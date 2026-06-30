@@ -10,6 +10,7 @@ import { MenuBook, ElectricBolt, Security, ArrowForward } from '@mui/icons-mater
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
+import creatorPhoto from '../../assets/rushi.jpeg';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -519,8 +520,8 @@ const FeatureCard = ({ icon: Icon, title, desc, accent, glow, delay, index }) =>
 const CREATOR_NAME = 'Rushikesh Harad';
 const CREATOR_DESC =
   'Passionate Full Stack Developer focused on building scalable web applications, modern user experiences, and industry-level software solutions.';
-// TODO: replace with the real asset path once the image is uploaded
-const CREATOR_IMAGE_SRC = '../../assets/rushi.jpeg';
+// Update this import path above if your file structure differs
+const CREATOR_IMAGE_SRC = creatorPhoto;
 
 const MeetTheCreator = () => {
   const sectionRef = useRef(null);
