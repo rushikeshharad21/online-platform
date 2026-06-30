@@ -520,7 +520,7 @@ const CREATOR_NAME = 'Rushikesh Harad';
 const CREATOR_DESC =
   'Passionate Full Stack Developer focused on building scalable web applications, modern user experiences, and industry-level software solutions.';
 // TODO: replace with the real asset path once the image is uploaded
-const CREATOR_IMAGE_SRC = '/assets/rushi.jpeg';
+const CREATOR_IMAGE_SRC = '../../assets/rushi.jpeg';
 
 const MeetTheCreator = () => {
   const sectionRef = useRef(null);
