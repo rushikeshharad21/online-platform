@@ -1040,7 +1040,7 @@ function Home() {
             variant="h1"
             sx={{
               fontSize: { xs: '1.7rem', sm: '2.4rem', md: '3.2rem', lg: '4.2rem' },
-              fontWeight: 800, color: '#fff',
+              fontWeight: 820, color: '#fff',
               mb: 3, letterSpacing: '-0.04em',
               lineHeight: { xs: 1.15, md: 1.1 },
             }}
