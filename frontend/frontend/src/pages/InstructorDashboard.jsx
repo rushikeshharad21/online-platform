@@ -41,6 +41,16 @@ const tk = {
   r:            '14px',
 };
 
+/* ─── Background image ───────────────────────────────────────────
+   Unsplash+ premium photo — verify you hold an Unsplash+ license
+   before shipping this to production; free-tier Unsplash licensing
+   does not cover plus.unsplash.com assets.
+   Bumped from the supplied w=500&q=60 to w=2400&q=80: the original
+   size would visibly pixelate stretched across a full viewport.
+──────────────────────────────────────────────────────────────── */
+const BG_IMAGE_URL =
+  'https://plus.unsplash.com/premium_photo-1701892428860-ca4913e92274?w=2400&auto=format&fit=crop&q=80&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8YmFja2dyb3VuZCUyMHVpJTIwaW1hZ2VzfGVufDB8fDB8fHww';
+
 const glass = (extra = {}) => ({
   background:          tk.surface,
   border:              `1px solid ${tk.border}`,
@@ -341,7 +351,35 @@ const InstructorDashboard = () => {
   const statValues     = { courses: courses.length, pub: publishedCount, drafts: draftCount, students: totalStudents };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: tk.bg, pt: 5, pb: 10 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: tk.bg, pt: 5, pb: 10, position: 'relative' }}>
+
+      {/* Background image + scrim — layered behind everything, does not
+          affect layout/flow of any existing element below. */}
+      <Box
+        aria-hidden="true"
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `url(${BG_IMAGE_URL})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.16,
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      />
+      <Box
+        aria-hidden="true"
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          background: `linear-gradient(180deg, ${tk.bg} 0%, rgba(7,17,31,0.92) 40%, ${tk.bg} 100%)`,
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      />
+
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
 
         {/* Header */}
