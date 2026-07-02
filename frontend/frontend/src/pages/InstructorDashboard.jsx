@@ -364,7 +364,7 @@ const InstructorDashboard = () => {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          opacity: 0.16,
+          opacity: 0.32,
           zIndex: 0,
           pointerEvents: 'none',
         }}
@@ -374,7 +374,7 @@ const InstructorDashboard = () => {
         sx={{
           position: 'absolute',
           inset: 0,
-          background: `linear-gradient(180deg, ${tk.bg} 0%, rgba(7,17,31,0.92) 40%, ${tk.bg} 100%)`,
+          background: 'linear-gradient(180deg, rgba(7,17,31,0.55) 0%, rgba(7,17,31,0.75) 40%, rgba(7,17,31,0.55) 100%)',
           zIndex: 0,
           pointerEvents: 'none',
         }}
