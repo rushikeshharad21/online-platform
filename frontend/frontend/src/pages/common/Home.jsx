@@ -14,29 +14,50 @@ import creatorPhoto from '../../assets/rushi.jpeg';
 
 gsap.registerPlugin(ScrollTrigger);
 
+/* ── Design tokens ────────────────────────────────────────────
+   One accent family (mint) drives all interactive/primary
+   moments. Blue and violet are kept ONLY as desaturated tonal
+   siblings to differentiate the three feature cards from each
+   other — they never appear on buttons, links, or focus states.
+──────────────────────────────────────────────────────────────── */
+const tokens = {
+  bg: '#07101d',
+  surface: 'rgba(16,26,42,0.6)',
+  surfaceElevated: 'rgba(20,32,50,0.75)',
+  border: 'rgba(255,255,255,0.08)',
+  borderStrong: 'rgba(255,255,255,0.16)',
+  textPrimary: 'rgba(245,247,250,0.92)',
+  textSecondary: 'rgba(245,247,250,0.62)',
+  textMuted: 'rgba(245,247,250,0.4)',
+  accent: '#5EEAD4',
+  accentHover: '#7FF3E0',
+  accentSoft: 'rgba(94,234,212,0.12)',
+  accentGlow: 'rgba(94,234,212,0.18)',
+};
+
 const FEATURES = [
   {
     icon: MenuBook,
     title: 'Mastery Paths',
     desc: 'Curated curriculum designed to take you from foundational basics to expert-level industry mastery.',
-    accent: '#64ffda',
-    glow: 'rgba(100,255,218,0.15)',
+    accent: '#5EEAD4',
+    glow: 'rgba(94,234,212,0.10)',
     delay: 0,
   },
   {
     icon: ElectricBolt,
     title: 'Adaptive Quizzes',
     desc: 'Dynamic assessment engines that evolve with your progress, ensuring 100% conceptual retention.',
-    accent: '#4f8ef7',
-    glow: 'rgba(79,142,247,0.15)',
+    accent: '#7DD3E8',
+    glow: 'rgba(125,211,232,0.10)',
     delay: 0.15,
   },
   {
     icon: Security,
     title: 'Ironclad Security',
     desc: 'End-to-end encryption for your intellectual property, research, and personal progress data.',
-    accent: '#a78bfa',
-    glow: 'rgba(167,139,250,0.15)',
+    accent: '#A5B4E0',
+    glow: 'rgba(165,180,224,0.10)',
     delay: 0.3,
   },
 ];
@@ -178,7 +199,7 @@ const FloatingBackground = () => {
           position: 'absolute', top: '8%', left: '12%',
           width: { xs: 200, md: 360 }, height: { xs: 200, md: 360 },
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(100,255,218,0.08) 0%, transparent 70%)',
+          background: `radial-gradient(circle, ${tokens.accentGlow} 0%, transparent 70%)`,
           filter: 'blur(40px)',
           willChange: 'transform',
         }}
@@ -189,7 +210,7 @@ const FloatingBackground = () => {
           position: 'absolute', top: '35%', right: '8%',
           width: { xs: 180, md: 320 }, height: { xs: 180, md: 320 },
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(79,142,247,0.07) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(125,211,232,0.06) 0%, transparent 70%)',
           filter: 'blur(40px)',
           willChange: 'transform',
         }}
@@ -200,7 +221,7 @@ const FloatingBackground = () => {
           position: 'absolute', bottom: '5%', left: '40%',
           width: { xs: 160, md: 280 }, height: { xs: 160, md: 280 },
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(167,139,250,0.07) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(165,180,224,0.06) 0%, transparent 70%)',
           filter: 'blur(40px)',
           willChange: 'transform',
         }}
@@ -244,7 +265,7 @@ const CursorGlow = () => {
         width: 420, height: 420,
         marginLeft: '-210px', marginTop: '-210px',
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(100,255,218,0.05) 0%, rgba(167,139,250,0.04) 45%, transparent 70%)',
+        background: `radial-gradient(circle, ${tokens.accentGlow} 0%, rgba(125,211,232,0.03) 45%, transparent 70%)`,
         pointerEvents: 'none',
         zIndex: 0,
         willChange: 'transform',
@@ -397,7 +418,7 @@ const FeatureCard = ({ icon: Icon, title, desc, accent, glow, delay, index }) =>
       ref={cardRef}
       sx={{
         position: 'relative',
-        borderRadius: '24px',
+        borderRadius: '20px',
         height: '100%',
         cursor: 'default',
         transformStyle: 'preserve-3d',
@@ -411,7 +432,7 @@ const FeatureCard = ({ icon: Icon, title, desc, accent, glow, delay, index }) =>
         sx={{
           position: 'absolute',
           inset: '-20px',
-          borderRadius: '32px',
+          borderRadius: '28px',
           background: `radial-gradient(circle at center, ${glow} 0%, transparent 70%)`,
           opacity: 0,
           pointerEvents: 'none',
@@ -426,21 +447,26 @@ const FeatureCard = ({ icon: Icon, title, desc, accent, glow, delay, index }) =>
         sx={{
           position: 'relative', zIndex: 1,
           display: 'flex', flexDirection: 'column',
-          background: 'rgba(16,28,45,0.65)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: `1px solid rgba(255,255,255,0.08)`,
-          borderRadius: '24px',
+          background: tokens.surface,
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: `1px solid ${tokens.border}`,
+          borderRadius: '20px',
           padding: { xs: '28px', sm: '36px', md: '40px' },
           height: '100%',
           overflow: 'hidden',
+          boxShadow: '0 1px 0 0 rgba(255,255,255,0.03) inset, 0 20px 40px -24px rgba(0,0,0,0.5)',
+          transition: 'border-color 0.3s ease',
+          '&:hover': {
+            borderColor: tokens.borderStrong,
+          },
           // Top shimmer line
           '&::before': {
             content: '""',
             position: 'absolute',
             top: 0, left: '10%', right: '10%', height: '1px',
             background: `linear-gradient(90deg, transparent, ${accent}, transparent)`,
-            opacity: 0.6,
+            opacity: 0.5,
           },
           // Corner glow
           '&::after': {
@@ -459,27 +485,27 @@ const FeatureCard = ({ icon: Icon, title, desc, accent, glow, delay, index }) =>
           ref={iconRef}
           sx={{
             mb: { xs: 3, md: 4 },
-            width: { xs: 54, md: 64 },
-            height: { xs: 54, md: 64 },
+            width: { xs: 50, md: 58 },
+            height: { xs: 50, md: 58 },
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            borderRadius: '16px',
-            background: `rgba(255,255,255,0.05)`,
-            border: `1px solid ${accent}30`,
+            borderRadius: '14px',
+            background: 'rgba(255,255,255,0.04)',
+            border: `1px solid ${accent}2A`,
             flexShrink: 0,
             willChange: 'transform',
           }}
         >
-          <Icon sx={{ fontSize: { xs: 26, md: 32 }, color: accent }} />
+          <Icon sx={{ fontSize: { xs: 24, md: 28 }, color: accent }} />
         </Box>
 
         {/* Accent line */}
         <Box
           ref={lineRef}
           sx={{
-            width: '40px', height: '3px',
+            width: '32px', height: '2px',
             borderRadius: '2px',
             background: `linear-gradient(90deg, ${accent}, transparent)`,
-            mb: '16px',
+            mb: '18px',
             transformOrigin: 'left',
           }}
         />
@@ -489,9 +515,9 @@ const FeatureCard = ({ icon: Icon, title, desc, accent, glow, delay, index }) =>
           ref={titleRef}
           variant="h4"
           sx={{
-            color: '#fff', fontWeight: 700, mb: 2,
-            fontSize: { xs: '1.2rem', md: '1.45rem' },
-            letterSpacing: '-0.02em',
+            color: tokens.textPrimary, fontWeight: 650, mb: 1.5,
+            fontSize: { xs: '1.15rem', md: '1.3rem' },
+            letterSpacing: '-0.015em',
           }}
         >
           {title}
@@ -503,9 +529,10 @@ const FeatureCard = ({ icon: Icon, title, desc, accent, glow, delay, index }) =>
             ref={descRef}
             variant="body1"
             sx={{
-              color: 'rgba(255,255,255,0.6)',
-              lineHeight: 1.8,
-              fontSize: { xs: '0.875rem', md: '0.95rem' },
+              color: tokens.textSecondary,
+              lineHeight: 1.7,
+              fontSize: { xs: '0.875rem', md: '0.925rem' },
+              maxWidth: '38ch',
             }}
           >
             {desc}
@@ -668,7 +695,7 @@ const MeetTheCreator = () => {
         aria-hidden="true"
         sx={{
           position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
-          background: 'radial-gradient(circle at 50% 35%, rgba(100,255,218,0.06) 0%, transparent 60%)',
+          background: `radial-gradient(circle at 50% 35%, ${tokens.accentGlow} 0%, transparent 60%)`,
           filter: 'blur(30px)',
         }}
       />
@@ -680,9 +707,9 @@ const MeetTheCreator = () => {
           variant="overline"
           sx={{
             display: 'block',
-            color: '#64ffda',
-            letterSpacing: '0.35em',
-            fontWeight: 700,
+            color: tokens.accent,
+            letterSpacing: '0.3em',
+            fontWeight: 650,
             fontSize: { xs: '10px', sm: '12px' },
             mb: { xs: 4, md: 5 },
           }}
@@ -710,7 +737,7 @@ const MeetTheCreator = () => {
             sx={{
               position: 'absolute', inset: '-30px',
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(100,255,218,0.18) 0%, transparent 70%)',
+              background: `radial-gradient(circle, rgba(94,234,212,0.14) 0%, transparent 70%)`,
               filter: 'blur(20px)',
               zIndex: 0,
             }}
@@ -722,7 +749,7 @@ const MeetTheCreator = () => {
             sx={{
               position: 'absolute', inset: '-18px',
               borderRadius: '50%',
-              border: '1px dashed rgba(100,255,218,0.15)',
+              border: '1px dashed rgba(94,234,212,0.14)',
               zIndex: 0,
               animation: prefersReducedMotion() ? 'none' : 'rk-orbit-spin 40s linear infinite',
               '@keyframes rk-orbit-spin': {
@@ -749,8 +776,8 @@ const MeetTheCreator = () => {
               sx={{
                 position: 'absolute', inset: '-8px',
                 borderRadius: '50%',
-                padding: '3px',
-                background: 'conic-gradient(from 0deg, #64ffda, #4f8ef7, #a78bfa, #64ffda)',
+                padding: '2px',
+                background: `conic-gradient(from 0deg, ${tokens.accent}, #7DD3E8, #A5B4E0, ${tokens.accent})`,
                 WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
                 WebkitMaskComposite: 'xor',
                 maskComposite: 'exclude',
@@ -768,9 +795,9 @@ const MeetTheCreator = () => {
                 height: '100%',
                 borderRadius: '50%',
                 overflow: 'hidden',
-                border: '1px solid rgba(255,255,255,0.12)',
-                boxShadow: '0 20px 45px rgba(0,0,0,0.45)',
-                background: 'rgba(16,28,45,0.65)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 16px 40px rgba(0,0,0,0.4)',
+                background: tokens.surface,
               }}
             >
               <Box
@@ -794,11 +821,11 @@ const MeetTheCreator = () => {
           ref={nameRef}
           variant="h3"
           sx={{
-            color: '#fff',
-            fontWeight: 800,
+            color: tokens.textPrimary,
+            fontWeight: 700,
             letterSpacing: '-0.02em',
-            fontSize: { xs: '1.5rem', sm: '1.9rem', md: '2.3rem' },
-            mb: 2,
+            fontSize: { xs: '1.5rem', sm: '1.9rem', md: '2.2rem' },
+            mb: 1.5,
             perspective: '600px',
           }}
         >
@@ -814,11 +841,11 @@ const MeetTheCreator = () => {
           ref={descRef}
           variant="body1"
           sx={{
-            color: 'rgba(255,255,255,0.6)',
-            maxWidth: '560px',
+            color: tokens.textSecondary,
+            maxWidth: '520px',
             mx: 'auto',
-            lineHeight: 1.8,
-            fontSize: { xs: '0.9rem', md: '1rem' },
+            lineHeight: 1.75,
+            fontSize: { xs: '0.9rem', md: '0.975rem' },
             px: { xs: 2, sm: 0 },
           }}
         >
@@ -877,13 +904,13 @@ const SkillsMarquee = () => {
         <Typography
           component="span"
           sx={{
-            color: 'rgba(255,255,255,0.55)',
-            fontWeight: 600,
-            fontSize: { xs: '0.95rem', md: '1.1rem' },
-            letterSpacing: '0.02em',
+            color: tokens.textMuted,
+            fontWeight: 550,
+            fontSize: { xs: '0.95rem', md: '1.05rem' },
+            letterSpacing: '0.01em',
             whiteSpace: 'nowrap',
             transition: 'color 0.3s ease',
-            '&:hover': { color: '#64ffda' },
+            '&:hover': { color: tokens.accent },
           }}
         >
           {skill}
@@ -892,10 +919,10 @@ const SkillsMarquee = () => {
           component="span"
           aria-hidden="true"
           sx={{
-            width: 6, height: 6, borderRadius: '50%',
+            width: 5, height: 5, borderRadius: '50%',
             mx: { xs: 2.5, md: 4 },
-            background: '#64ffda',
-            boxShadow: '0 0 8px rgba(100,255,218,0.6)',
+            background: tokens.accent,
+            boxShadow: `0 0 6px ${tokens.accentGlow}`,
             flexShrink: 0,
           }}
         />
@@ -1004,14 +1031,14 @@ function Home() {
     <Box sx={{
       width: '100%', minHeight: '100vh',
       py: { xs: 8, sm: 10, md: 15 },
-      background: '#050b16',
+      background: `radial-gradient(120% 80% at 50% -10%, #0c1a2c 0%, ${tokens.bg} 55%)`,
       position: 'relative', overflow: 'hidden',
       '&::before': {
         content: '""', position: 'absolute',
         top: '-10%', left: { xs: '-10%', md: '20%' },
         width: { xs: '300px', md: '600px' },
         height: { xs: '300px', md: '600px' },
-        background: 'radial-gradient(circle, rgba(100,255,218,0.06) 0%, transparent 70%)',
+        background: `radial-gradient(circle, ${tokens.accentGlow} 0%, transparent 70%)`,
         zIndex: 0,
       },
     }}>
@@ -1027,8 +1054,8 @@ function Home() {
             ref={tagRef}
             variant="overline"
             sx={{
-              color: '#64ffda', letterSpacing: '0.2em',
-              fontWeight: 700, opacity: 0.8,
+              color: tokens.accent, letterSpacing: '0.18em',
+              fontWeight: 650, opacity: 0.9,
               fontSize: { xs: '10px', sm: '12px' },
             }}
           >
@@ -1039,27 +1066,28 @@ function Home() {
             ref={titleRef}
             variant="h1"
             sx={{
-              fontSize: { xs: '1.7rem', sm: '2.4rem', md: '3.2rem', lg: '4.2rem' },
-              fontWeight: 820, color: '#fff',
-              mb: 3, letterSpacing: '-0.04em',
-              lineHeight: { xs: 1.15, md: 1.1 },
+              fontSize: { xs: '2rem', sm: '2.6rem', md: '3.4rem', lg: '4rem' },
+              fontWeight: 700, color: tokens.textPrimary,
+              mb: 3, letterSpacing: '-0.035em',
+              lineHeight: { xs: 1.15, md: 1.08 },
             }}
           >
-            Rk.learning.<span style={{ color: '#64ffda' }}>platform</span>
+            Rk.learning.<Box component="span" sx={{ color: tokens.accent }}>platform</Box>
           </Typography>
 
           <Typography
             ref={subRef}
             variant="h5"
             sx={{
-              color: 'rgba(255,255,255,0.6)',
-              maxWidth: '700px', mx: 'auto',
-              lineHeight: 1.6, mb: 6,
-              fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
+              color: tokens.textSecondary,
+              maxWidth: '640px', mx: 'auto',
+              lineHeight: 1.65, mb: 6,
+              fontWeight: 400,
+              fontSize: { xs: '1rem', sm: '1.05rem', md: '1.15rem' },
               px: { xs: 2, sm: 0 },
             }}
           >
-            The definitive platform made by Rushikesh harad. Master complex concepts with
+            The definitive platform made by Rushikesh Harad. Master complex concepts with
             structured paths, real-time analytics, and enterprise-grade security.
           </Typography>
 
@@ -1075,16 +1103,17 @@ function Home() {
                 variant="contained" size="large"
                 onClick={() => navigate(user.role === 'instructor' ? '/instructor/dashboard' : '/dashboard')}
                 sx={{
-                  borderRadius: 4, px: { xs: 4, sm: 6 }, py: 2,
+                  borderRadius: 3, px: { xs: 4, sm: 6 }, py: 1.75,
                   textTransform: 'none',
-                  fontSize: { xs: '1rem', sm: '1.1rem' },
-                  background: '#64ffda', color: '#050b16', fontWeight: 700,
-                  boxShadow: '0 10px 25px rgba(100,255,218,0.2)',
+                  fontSize: { xs: '0.95rem', sm: '1.02rem' },
+                  fontWeight: 600,
+                  background: tokens.accent, color: '#04120f',
+                  boxShadow: `0 8px 20px -6px ${tokens.accentGlow}`,
                   width: { xs: '100%', sm: 'auto' },
-                  transition: 'box-shadow 0.3s ease, background 0.3s ease',
+                  transition: 'box-shadow 0.3s ease, background 0.3s ease, transform 0.2s ease',
                   '&:hover': {
-                    background: '#4eedc4',
-                    boxShadow: '0 14px 32px rgba(100,255,218,0.32)',
+                    background: tokens.accentHover,
+                    boxShadow: `0 12px 28px -6px rgba(94,234,212,0.32)`,
                   },
                 }}
               >
@@ -1096,14 +1125,16 @@ function Home() {
                   variant="contained" size="large"
                   onClick={() => navigate('/login')}
                   sx={{
-                    borderRadius: 4, px: { xs: 4, sm: 5 }, py: 2,
-                    background: '#64ffda', color: '#050b16', fontWeight: 700,
-                    fontSize: { xs: '1rem', sm: '1.1rem' },
+                    borderRadius: 3, px: { xs: 4, sm: 5 }, py: 1.75,
+                    background: tokens.accent, color: '#04120f', fontWeight: 600,
+                    fontSize: { xs: '0.95rem', sm: '1.02rem' },
+                    textTransform: 'none',
                     width: { xs: '100%', sm: 'auto' },
+                    boxShadow: `0 8px 20px -6px ${tokens.accentGlow}`,
                     transition: 'box-shadow 0.3s ease, background 0.3s ease',
                     '&:hover': {
-                      background: '#4eedc4',
-                      boxShadow: '0 14px 32px rgba(100,255,218,0.32)',
+                      background: tokens.accentHover,
+                      boxShadow: `0 12px 28px -6px rgba(94,234,212,0.32)`,
                     },
                   }}
                 >
@@ -1114,14 +1145,16 @@ function Home() {
                   onClick={() => navigate('/register')}
                   endIcon={<ArrowForward />}
                   sx={{
-                    borderRadius: 4, px: { xs: 4, sm: 5 }, py: 2,
-                    color: '#fff', borderColor: 'rgba(255,255,255,0.2)',
-                    fontSize: { xs: '1rem', sm: '1.1rem' },
+                    borderRadius: 3, px: { xs: 4, sm: 5 }, py: 1.75,
+                    color: tokens.textPrimary, borderColor: tokens.border,
+                    fontSize: { xs: '0.95rem', sm: '1.02rem' },
+                    fontWeight: 600,
+                    textTransform: 'none',
                     width: { xs: '100%', sm: 'auto' },
                     transition: 'border-color 0.3s ease, background 0.3s ease',
                     '&:hover': {
-                      borderColor: 'rgba(255,255,255,0.45)',
-                      background: 'rgba(255,255,255,0.05)',
+                      borderColor: tokens.borderStrong,
+                      background: 'rgba(255,255,255,0.03)',
                     },
                   }}
                 >
