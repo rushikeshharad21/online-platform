@@ -829,11 +829,28 @@ const MeetTheCreator = () => {
             perspective: '600px',
           }}
         >
-          {CREATOR_NAME.split('').map((ch, i) => (
-            <span key={i} style={{ display: 'inline-block' }}>
-              {ch === ' ' ? '\u00A0' : ch}
-            </span>
-          ))}
+          {(() => {
+            const chars = CREATOR_NAME.split('');
+            const gradient = `linear-gradient(90deg, ${tokens.accent}, #7DD3E8, #A5B4E0, ${tokens.accent})`;
+            const bgSize = `${chars.length * 100}% 100%`;
+            return chars.map((ch, i) => (
+              <span
+                key={i}
+                style={{
+                  display: 'inline-block',
+                  backgroundImage: gradient,
+                  backgroundSize: bgSize,
+                  backgroundPosition: `${(i / Math.max(chars.length - 1, 1)) * 100}% 0`,
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  color: tokens.textPrimary,
+                }}
+              >
+                {ch === ' ' ? '\u00A0' : ch}
+              </span>
+            ));
+          })()}
         </Typography>
 
         {/* description */}
