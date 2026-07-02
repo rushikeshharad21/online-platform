@@ -24,8 +24,8 @@ const tk = {
   borderHover:  'rgba(255,255,255,0.16)',
   blur:         'blur(20px)',
   text1:        '#f0f4ff',
-  text2:        'rgba(200,215,240,0.65)',
-  text3:        'rgba(160,185,220,0.38)',
+  text2:        'rgba(210,225,248,0.78)',
+  text3:        'rgba(190,210,240,0.58)',
   blue:         '#4f8ef7',
   blueGlow:     'rgba(79,142,247,0.18)',
   blueBorder:   'rgba(79,142,247,0.28)',
@@ -364,7 +364,7 @@ const InstructorDashboard = () => {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          opacity: 0.32,
+          opacity: 0.8,
           zIndex: 0,
           pointerEvents: 'none',
         }}
@@ -374,7 +374,7 @@ const InstructorDashboard = () => {
         sx={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(180deg, rgba(7,17,31,0.55) 0%, rgba(7,17,31,0.75) 40%, rgba(7,17,31,0.55) 100%)',
+          background: 'linear-gradient(180deg, rgba(7,17,31,0.2) 0%, rgba(7,17,31,0.35) 40%, rgba(7,17,31,0.2) 100%)',
           zIndex: 0,
           pointerEvents: 'none',
         }}
